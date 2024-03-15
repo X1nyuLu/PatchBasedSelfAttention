@@ -1,0 +1,399 @@
+import os
+import time
+import logging
+
+import torch
+import torch.nn as nn
+from torch.optim.lr_scheduler import LambdaLR
+
+import sys
+sys.path.append("/rds/projects/c/chenlv-ai-and-chemistry/wuwj/")
+import Transformer_Code.train_annotated_transformer.the_annotated_transformer as atf
+from modified_ViT.utils.newDatasetDataLoader_withAug import generateDataset, CreateDataloader
+from modified_ViT.model.spectra_process_layer import *
+
+from torch.utils.tensorboard import SummaryWriter
+
+class LabelSmoothing(nn.Module):
+    "Implement label smoothing."
+
+    def __init__(self, criterion, size, padding_idx, smoothing=0.0):
+        super(LabelSmoothing, self).__init__()
+        # self.criterion = nn.KLDivLoss(reduction="sum")
+        self.criterion = criterion
+        self.padding_idx = padding_idx
+        self.confidence = 1.0 - smoothing
+        self.smoothing = smoothing
+        self.size = size
+        self.true_dist = None
+
+    def forward(self, x, target):
+        assert x.size(1) == self.size
+        true_dist = x.data.clone()
+        true_dist.fill_(self.smoothing / (self.size - 2))
+        true_dist.scatter_(1, target.data.unsqueeze(1), self.confidence)
+        true_dist[:, self.padding_idx] = 0
+        mask = torch.nonzero(target.data == self.padding_idx)
+        if mask.dim() > 0:
+            true_dist.index_fill_(0, mask.squeeze(), 0.0)
+        self.true_dist = true_dist
+        return self.criterion(x, true_dist.clone().detach())
+
+class Batch:
+    """Object for holding a batch of data with mask during training."""
+
+    def __init__(self, device, src, tgt, pad=2):  # 2 = <blank>
+        
+        self.src = src.to(device)
+        # self.src_mask = (src != pad).unsqueeze(-2).to(device)
+        tgt = tgt.to(device)
+        if tgt is not None:
+            self.tgt = tgt[:, :-1]
+            self.tgt_y = tgt[:, 1:]
+            self.tgt_mask = self.make_std_mask(self.tgt, pad)
+            self.ntokens = (self.tgt_y != pad).data.sum()
+
+    @staticmethod
+    def make_std_mask(tgt, pad):
+        "Create a mask to hide padding and future words."
+        tgt_mask = (tgt != pad).unsqueeze(-2)
+        tgt_mask = tgt_mask & atf.subsequent_mask(tgt.size(-1)).type_as(
+            tgt_mask.data
+        )
+        return tgt_mask   
+
+class TrainState:
+    """Track number of steps, examples, and tokens processed"""
+
+    step: int = 0  # Steps in the current epoch
+    accum_step: int = 0  # Number of gradient accumulation steps
+    samples: int = 0  # total # of examples used
+    tokens: int = 0  # total # of tokens processed
+
+class TrainVal:
+
+    def __init__(self, data, vocab,
+                 save_path,
+                 spec_len=3200,
+                 model=None, src_embed=None, d_model=512, num_heads=8, patch_size=8,
+                 batchsize=128, accum_iter=10,
+                 aug_mode=None,
+                 testTrain=False):
+        
+        """
+        Parameters:
+            data: 
+                `str: path to .pkl file` contains smiles, formula and spectra
+                `str: path to dir` contains train/val/test dataset
+            vocab: 
+                `str: path to vocab.pt` or `tuple` or `None`
+                `str`: load vocab
+                `tuple`: (src_vocab, tgt_vocab)
+                `None`: build vocab
+            save_path: 
+                saving output including vocab, tensorboard, log file etc.
+            model: 
+                `None`: build a new model
+                ``str: path to model.pt
+                `model instance`
+            aug_mode: None or 'verticalNoise' or 'horizontalShift'
+        """
+        logging.basicConfig(level=logging.INFO,handlers=[logging.FileHandler(os.path.join(save_path,"train.log"))])
+        logger = logging.getLogger("INIT")
+        
+
+        self.save_path = save_path
+
+        # Model Paras 
+        self.d_model = d_model
+        self.num_heads = num_heads
+
+        # Train Paras
+        self.batch_size = batchsize
+        self.num_epochs = 200
+        self.accum_iter= accum_iter
+        self.base_lr= 1.0
+        self.tgt_max_padding= 40
+        self.warmup= 3000
+        self.file_prefix= "EPOCH_"
+
+        self.device = (
+        "cuda"
+        if torch.cuda.is_available()
+        else "mps"
+        if torch.backends.mps.is_available()
+        else "cpu"
+        )
+        
+        logger.info("tgt max pad: {}| batchsize: {}, accumulation iter: {}| d_model: {}, num_heads:{}, patch size:{} | epoch num: {}| base lr: {}| warmup stpes:{}".format(
+                    self.tgt_max_padding, self.batch_size, self.accum_iter, self.d_model, self.num_heads, patch_size, self.num_epochs, self.base_lr, self.warmup))
+
+        # CONSTANTS
+        self.bs_idx = 0
+        self.eos_idx = 1
+        self.padding_idx = 2
+
+        if type(vocab) == str and os.path.exists(vocab):
+            _, self.tgt_vocab = torch.load(vocab)
+        else:
+            _, self.tgt_vocab = vocab
+
+
+        logger.info("Building dataset...")
+        logger.info("Data: {}".format(data))
+        logger.info("Augmentation mode: {}".format(augMode))
+        if os.path.isfile(data):
+            dataset = generateDataset(data, self.tgt_vocab, spec_len=spec_len, aug_mode=aug_mode, formula=False)
+            train_set, val_set, test_set = torch.utils.data.random_split(dataset, [0.7, 0.1, 0.2], generator=torch.Generator().manual_seed(42))
+            data_path = os.path.join(self.save_path, 'data')
+            os.mkdir(data_path)
+            torch.save(train_set, os.path.join(data_path, 'train_set.pt'))
+            torch.save(val_set, os.path.join(data_path, 'val_set.pt'))
+            torch.save(test_set, os.path.join(data_path, 'test_set.pt'))
+            logger.info("smiles max len: {}".format(dataset.smi_max_len))
+        elif os.path.isdir(data):
+            if testTrain:
+                dataset = torch.load(os.path.join(data, 'val_set.pt'))
+                train_set, val_set = torch.utils.data.random_split(dataset, [0.9, 0.1], generator=torch.Generator().manual_seed(42))
+            else:
+                train_set = torch.load(os.path.join(data, 'train_set.pt'))
+                val_set = torch.load(os.path.join(data, 'val_set.pt'))
+
+        logger.info("Building dataloader...")
+        createdataloader = CreateDataloader(pad_id=self.padding_idx,
+                                            bs_id=self.bs_idx,
+                                            eos_id=self.eos_idx,
+                                            tgt_max_padding=self.tgt_max_padding)
+        self.train_dataloader = createdataloader.dataloader(train_set, batch_size=self.batch_size, shuffle=True)
+        self.valid_dataloader = createdataloader.dataloader(val_set, batch_size=self.batch_size, shuffle=True)
+
+        logger.info("train : {} batches per epoch | val: {} batches per epoch".format(len(self.train_dataloader),len(self.valid_dataloader)))
+        
+        if model == None:
+            logger.info("Building model...")
+            assert src_embed != None, "Src_embed is not set."
+            self.model = make_model(tgt_vocab=len(self.tgt_vocab), src_embed=src_embed)
+        elif os.path.isfile(model):
+            self.model = make_model(tgt_vocab=len(self.tgt_vocab), src_embed=src_embed)
+            self.model.load_state_dict(torch.load(model))
+        else:
+            self.model = model
+
+        self.model.to(self.device)
+        logger.info(self.model)
+
+
+    def train_worker(self):
+        logger = logging.getLogger("TRAIN")
+        
+        model = self.model
+        
+        self.writer = SummaryWriter(log_dir=self.save_path)
+
+        criterion_ = nn.KLDivLoss(reduction="sum")
+        criterion = LabelSmoothing(
+            criterion_, size=len(self.tgt_vocab), padding_idx=self.padding_idx, smoothing=0.1
+        )
+        criterion.to(self.device)
+
+        
+        optimizer = torch.optim.Adam(
+            model.parameters(), lr=self.base_lr, betas=(0.9, 0.98), eps=1e-9
+        )
+        lr_scheduler = LambdaLR(
+            optimizer=optimizer,
+            lr_lambda=lambda step: atf.rate(
+                step, self.d_model, factor=1, warmup=self.warmup
+            ),
+        )
+        train_state = TrainState()
+
+        best_val_loss = float('inf')
+        best_model_params_path = os.path.join(self.save_path, "best_model_params.pt")
+        
+        for epoch in range(self.num_epochs):
+
+            logger.info(f"Epoch {epoch} Training ====")
+            model.train()
+            _, train_state = self.run_epoch(epoch,
+                                            (Batch(self.device, b['spec'], b['smi'], self.padding_idx) for b in self.train_dataloader),
+                                            model,
+                                            atf.SimpleLossCompute(model.generator, criterion),
+                                            optimizer,
+                                            lr_scheduler,
+                                            mode="train",
+                                            accum_iter=self.accum_iter,
+                                            train_state=train_state,)
+            
+
+            if epoch % 20 == 0:
+                file_path = os.path.join(self.save_path,"%s%.2d.pt" % (self.file_prefix, epoch))
+                torch.save(model.state_dict(), file_path)
+            torch.cuda.empty_cache()
+
+            logger.info(f"Epoch {epoch} Validation ====")
+            model.eval()
+            val_loss, _ = self.run_epoch(epoch,
+                                      (Batch(self.device, b['spec'], b['smi'], self.padding_idx) for b in self.valid_dataloader),
+                                      model,
+                                      atf.SimpleLossCompute(model.generator, criterion),
+                                      atf.DummyOptimizer(),
+                                      atf.DummyScheduler(),
+                                      mode="eval",)
+            self.writer.add_scalar("Val Loss", val_loss, epoch)
+            if val_loss < best_val_loss:
+                best_val_loss = val_loss
+                logger.info('Epoch {}: Saving model with the best val loss...'.format(epoch))
+                torch.save(model.state_dict(), best_model_params_path)
+            torch.cuda.empty_cache()
+
+        self.writer.close()
+        file_path = os.path.join(self.save_path, "%sfinal.pt" % self.file_prefix)
+        torch.save(model.state_dict(), file_path)
+    
+    def run_epoch(self,
+                  epoch,
+                  data_iter,
+                  model,
+                  loss_compute,
+                  optimizer,
+                  scheduler,
+                  mode="train",
+                  accum_iter=1,
+                  train_state=TrainState(),
+                ):
+        """Train a single epoch"""
+        logger = logging.getLogger("BATCH TRAIN")
+        start = time.time()
+        total_tokens = 0
+        total_loss = 0
+        tokens = 0
+        n_accum = 0
+        for i, batch in enumerate(data_iter):
+            
+            if mode == "train" :
+                out = model.forward(
+                    batch.src, batch.tgt, batch.tgt_mask
+                )
+                loss, loss_node = loss_compute(out, batch.tgt_y, batch.ntokens)
+                
+                loss_node.backward()
+                train_state.step += 1
+                train_state.samples += batch.src.shape[0]
+                train_state.tokens += batch.ntokens
+                if i % accum_iter == 0:
+                    optimizer.step()
+                    optimizer.zero_grad(set_to_none=True)
+                    n_accum += 1
+                    train_state.accum_step += 1
+                scheduler.step()
+            elif mode == "eval": 
+                with torch.no_grad():
+                    out = model.forward(
+                        batch.src, batch.tgt, batch.tgt_mask
+                    )
+                    loss, loss_node = loss_compute(out, batch.tgt_y, batch.ntokens)
+            
+
+            total_loss += loss
+            total_tokens += batch.ntokens
+            tokens += batch.ntokens
+            if i % 40 == 1 and mode == "train":
+                lr = optimizer.param_groups[0]["lr"]
+                elapsed = time.time() - start
+                logger.info(
+                    (
+                        "Epoch Step: %6d | Accumulation Step: %3d | Loss: %6.3e "
+                        + "| Tokens / Sec: %7.1f | Learning Rate: %6.1e"
+                    )
+                    % (i, n_accum, loss / batch.ntokens, tokens / elapsed, lr)
+                )
+                self.writer.add_scalar("Train Loss",loss / batch.ntokens, i + epoch * len(self.train_dataloader))
+                start = time.time()
+                tokens = 0
+
+            del loss
+            del loss_node
+            torch.cuda.empty_cache()
+        return total_loss / total_tokens, train_state
+
+import copy
+def make_model(
+    tgt_vocab, src_embed, 
+    N=4, d_model=512, d_ff=2048, h=8, dropout=0.1
+):
+    
+    c = copy.deepcopy
+    attn = atf.MultiHeadedAttention(h, d_model)
+    ff = atf.PositionwiseFeedForward(d_model, d_ff, dropout)
+    position = atf.PositionalEncoding(d_model, dropout)
+    model = EncoderDecoder(
+        atf.Encoder(atf.EncoderLayer(d_model, c(attn), c(ff), dropout), N),
+        atf.Decoder(atf.DecoderLayer(d_model, c(attn), c(attn), c(ff), dropout), N),
+        nn.Sequential(src_embed, c(position)),
+        nn.Sequential(atf.Embeddings(d_model, tgt_vocab), c(position)),
+        atf.Generator(d_model, tgt_vocab),
+    )
+
+    # This was important from their code.
+    # Initialize parameters with Glorot / fan_avg.
+    for p in model.parameters():
+        if p.dim() > 1:
+            nn.init.xavier_uniform_(p)
+    return model
+
+class EncoderDecoder(nn.Module):
+    """
+    A standard Encoder-Decoder architecture. Base for this and many
+    other models.
+    """
+
+    def __init__(self, encoder, decoder, src_embed, tgt_embed, generator):
+        super(EncoderDecoder, self).__init__()
+        self.src_embed = src_embed
+        self.encoder = encoder
+        self.tgt_embed = tgt_embed
+        self.decoder = decoder
+        self.generator = generator
+
+    def forward(self, src, tgt, tgt_mask):
+        "Take in and process masked src and target sequences."
+        return self.decode(self.encode(src), tgt, tgt_mask)
+
+    def encode(self, src, src_mask=None):
+        return self.encoder(self.src_embed(src), src_mask)
+
+    def decode(self, memory, tgt, tgt_mask, src_mask=None):
+        return self.decoder(self.tgt_embed(tgt), memory, src_mask, tgt_mask)
+    
+
+if __name__ == "__main__":
+
+    data = "/rds/projects/c/chenlv-ai-and-chemistry/wuwj/IRtoMol/data/ir_data.pkl"
+    save_path = "/rds/projects/c/chenlv-ai-and-chemistry/wuwj/modified_ViT/newVocabNewData/train_result"
+    formula_vocab = torch.load("/rds/projects/c/chenlv-ai-and-chemistry/wuwj/modified_ViT/utils/buildVocab/vocab_formula.pt")
+    smiles_vocab = torch.load("/rds/projects/c/chenlv-ai-and-chemistry/wuwj/modified_ViT/utils/buildVocab/vocab_smiles.pt")
+    vocab = (formula_vocab, smiles_vocab)
+
+    patch_size = 8
+    spec_len = 3200
+
+    # EmbedPatchAttention
+    batch_size=128
+    augMode = None
+    # augMode = 'verticalNoise'
+    # augMode = 'horizontalShift'
+    src_embed = EmbedPatchAttention(spec_len=spec_len, patch_len=patch_size, d_model=512, src_vocab=100)
+    save_path = os.path.join(save_path,"embedpatchattention_onlyspec_bs{}_ps{}_aug{}_{}".format(batch_size, patch_size, augMode,time.strftime("%X_%d_%b")))
+    
+    
+    os.mkdir(save_path)
+    TRAIN = TrainVal(data, vocab, save_path, spec_len=spec_len, 
+                     src_embed=src_embed,
+                     batchsize=batch_size, accum_iter=20,
+                     d_model=512, num_heads=8, patch_size=patch_size, 
+                     aug_mode=augMode,
+                     testTrain=False)
+    TRAIN.train_worker()
+
+    

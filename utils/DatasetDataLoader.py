@@ -141,14 +141,15 @@ class generateDataset(Dataset):
         elif aug_mode == 'verticalNoise' or aug_mode == ['verticalNoise']:
             assert ((theta!=None) and (alpha!=None)), 'theta({}) and alpha({}) should be set.'.format(theta, alpha)
             spec_list = []
-            for spec in spec_data:
+            # for spec in spec_data:
+            for spec in tqdm(spec_data, desc="spectra | {}".format(str(aug_mode))):
                 spec_list.append(torch.tensor(interpolate_spectrum(spec, new_x)[0])) # original spec
                 for i in range(aug_num):
                     spec_list.append(self.vertical_noise(new_x, spec, theta=theta, alpha=alpha))
                 
         elif aug_mode == 'horizontalShift' or aug_mode == ['horizontalShift']:
             spec_list = []
-            for spec in spec_data:
+            for spec in tqdm(spec_data, desc="spectra | {}".format(str(aug_mode))):
                 spec_list.append(torch.tensor(interpolate_spectrum(spec, new_x)[0])) # original spec
                 
                 shift = np.arange(-max_shift, max_shift + 1)
@@ -173,7 +174,8 @@ class generateDataset(Dataset):
                     spec_list.append(self.shift_horizontal_nonFP(spec, shift=shift_i, new_x=new_x))
         elif aug_mode == 'SMILES' or aug_mode == ['SMILES'] :
             spec_list = []
-            for spec in spec_data:
+            assert smi_aug_num != None and smi_aug_num > 0, 'smi_aug_num({}) should be larger than 0.'.format(smi_aug_num)
+            for spec in tqdm(spec_data, desc="spectra | {}".format(str(aug_mode))):
                 # spec_list += [torch.tensor(interpolate_spectrum(spec, new_x)[0])] * (aug_num + 1)
                 spec_list += [torch.tensor(interpolate_spectrum(spec, new_x)[0])] * (smi_aug_num + 1)
                 # for i in range(aug_num):
@@ -188,7 +190,8 @@ class generateDataset(Dataset):
             shift = np.random.choice(shift, size=aug_num, replace=False)
             
             spec_list = []
-            for spec in spec_data:
+            # for spec in spec_data:
+            for spec in tqdm(spec_data, desc="spectra | {}".format(str(aug_mode))):
                 if set(aug_mode) == set(['verticalNoise', 'horizontalShift']):
                     spec_list.append(torch.tensor(interpolate_spectrum(spec, new_x)[0])) # original spec
                 elif set(aug_mode) == set(['verticalNoise', 'horizontalShift', 'SMILES']):
@@ -207,7 +210,8 @@ class generateDataset(Dataset):
         elif set(aug_mode) == set(['verticalNoise', 'SMILES']): 
             assert ((theta!=None) and (alpha!=None)), 'theta({}) and alpha({}) should be set.'.format(theta, alpha)
             spec_list = []
-            for spec in spec_data:
+            # for spec in spec_data:
+            for spec in tqdm(spec_data, desc="spectra | {}".format(str(aug_mode))):
                 # spec_list += [torch.tensor(interpolate_spectrum(spec, new_x)[0])] # original spec
                 # spec_list += [torch.tensor(interpolate_spectrum(spec, new_x)[0])] * (aug_num + 1) # original spec
                 spec_list += [torch.tensor(interpolate_spectrum(spec, new_x)[0])] * (smi_aug_num + 1) # original spec
@@ -220,7 +224,8 @@ class generateDataset(Dataset):
                     # print(len(spec_list))
         elif set(aug_mode) == set(['horizontalShift', 'SMILES']): 
             spec_list = []
-            for spec in spec_data:
+            # for spec in spec_data:
+            for spec in tqdm(spec_data, desc="spectra | {}".format(str(aug_mode))):
                 spec_list += [torch.tensor(interpolate_spectrum(spec, new_x)[0])] * (smi_aug_num + 1)# original spec
                 
                 shift = np.arange(-max_shift, max_shift + 1)
@@ -285,7 +290,7 @@ class generateDataset(Dataset):
     def smiles2tensor(self, smi_data, vocab, aug_mode, aug_num, smi_aug_num=0):
         new_lines = []
         max_len = 0
-        for smi in tqdm(smi_data):
+        for smi in tqdm(smi_data, desc='smiles'):
             len_list = []
 
             smi_ori = torch.tensor([ vocab[token] for token in split_smiles(smi)])
@@ -327,7 +332,7 @@ class generateDataset(Dataset):
                 
                 # new_lines += smi_tensor_list
                 
-                if aug_mode =='SMILES':
+                if aug_mode == 'SMILES' or aug_mode == ['SMILES']:
                     new_lines += smi_tensor_list
                 elif type(aug_mode) == list:
                     # new_lines += smi_tensor_list * (len(aug_mode)-1) * (aug_num+1)
@@ -347,7 +352,7 @@ class generateDataset(Dataset):
         txt_split_list = [split_formula(i) for i in formula_data]
         new_lines = []
         max_len = 0
-        for line_ in tqdm(txt_split_list):
+        for line_ in tqdm(txt_split_list, desc='formula'):
             line = torch.tensor([ vocab[token] for token in line_])
             
             if line.shape[0] > max_len:
@@ -356,16 +361,14 @@ class generateDataset(Dataset):
 
             # if aug_mode == 'verticalNoise' or aug_mode == 'horizontalShift' or aug_mode=='horizontalShiftNonFP' or aug_mode=='SMILES':
             if aug_mode is None: new_lines.append(line)
-            elif type(aug_mode) == str or len(aug_mode) == 1:
-                if aug_mode == 'SMILES':
+            # elif type(aug_mode) == str or len(aug_mode) == 1:
+            elif aug_mode == 'SMILES' or aug_mode == ['SMILES']:
                     new_lines += [line] * (smi_aug_num+1)
-                else:
-                    new_lines += [line] * (aug_num+1)
-            elif type(aug_mode) == list:
-                if 'SMILES' in aug_mode:
-                    # new_lines += [line] * (len(aug_mode)-1) * (aug_num+1)**2
-                    new_lines += [line] * (aug_num+1) * (smi_aug_num+1)
-                else: new_lines += [line] * (aug_num+1)
+                # else:
+                    # new_lines += [line] * (aug_num+1)
+            elif type(aug_mode) == list and 'SMILES' in aug_mode:
+                new_lines += [line] * (aug_num+1) * (smi_aug_num+1)
+            else: new_lines += [line] * (aug_num+1)
         return new_lines, max_len
     
     def __len__(self):

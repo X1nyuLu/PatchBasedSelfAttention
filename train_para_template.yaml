@@ -41,4 +41,5 @@ seed: 3234
 
 earlystop_delta: 0.08
 earlystop_patience: 5
+check_point_step: 20
 report_step: 40

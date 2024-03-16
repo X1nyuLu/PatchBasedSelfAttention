@@ -81,7 +81,8 @@ class TrainVal:
                  seed=0,
                  earlystop_delta=None,
                  earlystop_patience=None,
-                 report_step=40
+                 report_step=40,
+                 check_point_step=20
                  ):
         
         """
@@ -133,6 +134,7 @@ class TrainVal:
             self.earlystop = False
         
         self.report_step = report_step
+        self.check_point_step = check_point_step
 
 
         self.device = (
@@ -142,6 +144,7 @@ class TrainVal:
         if torch.backends.mps.is_available()
         else "cpu"
         )
+        print(torch.cuda.is_available(), self.device)
         
         set_random_seed(seed)
         
@@ -396,7 +399,7 @@ class TrainVal:
                                             report_step=self.report_step)
             
 
-            if epoch % 20 == 0:
+            if epoch % self.check_point_step == 0:
                 file_path = os.path.join(model_savepath,"%s%.2d.pt" % (self.file_prefix, epoch))
                 torch.save(model.state_dict(), file_path)
             torch.cuda.empty_cache()
@@ -441,7 +444,7 @@ class TrainVal:
                   mode="train",
                   accum_iter=1,
                   train_state=TrainState(),
-                  report_step=40
+                  report_step=40,
                 ):
         """Train a single epoch"""
         logger = logging.getLogger("BATCH TRAIN")

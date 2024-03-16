@@ -56,7 +56,8 @@ TRAIN = TrainVal(data=config['data'],
                  seed=config['seed'],
                  earlystop_delta=config['earlystop_delta'],
                  earlystop_patience=config['earlystop_patience'],
-                 report_step=config["report_step"]
+                 report_step=config["report_step"],
+                 check_point_step=config["check_point_step"]
                  )
                  
 TRAIN.train_worker()

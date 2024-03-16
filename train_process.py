@@ -144,7 +144,7 @@ class TrainVal:
         if torch.backends.mps.is_available()
         else "cpu"
         )
-        print(torch.cuda.is_available(), self.device)
+        # print(torch.cuda.is_available(), self.device)
         
         set_random_seed(seed)
         
@@ -250,12 +250,9 @@ class TrainVal:
         logger.info("Augmentation mode: {}".format(aug_mode))
         if os.path.isfile(data):
             assert os.path.exists(data) and '.pkl' in data, "`data` should be path to .pkl file."
-            # if vocab_smiles == None or vocab_formula == None:
-            #     pass
-            # else:
-            #     data_df = pd.read_pickle(data)
             if data_df is None:
                 data_df = pd.read_pickle(data)
+
             # Split data before generating dataset in case test dataset 
             # contains the same molecules in train set during data augmentation.
             data_df = data_df.sample(frac=1) # shuffle dataframe
@@ -335,7 +332,14 @@ class TrainVal:
             else:
                 train_set = torch.load(os.path.join(data, 'train_set.pt'))
                 val_set = torch.load(os.path.join(data, 'val_set.pt'))
-        else: train_set, val_set = data
+            logger.info("train_set: {} data | val_set: {} data".format(train_set.shape[0],
+                                                                        val_set.shape[0]))
+                
+        else: 
+            train_set, val_set = data
+            logger.info("train_set: {} data | val_set: {} data".format(train_set.shape[0],
+                                                                        val_set.shape[0]))
+            
 
         logger.info("Building dataloader...")
         createdataloader = CreateDataloader(pad_id=self.padding_idx,

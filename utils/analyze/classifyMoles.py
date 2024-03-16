@@ -9,6 +9,7 @@ from rdkit.Chem import Fragments, rdMolDescriptors
 from rdkit.Chem.Scaffolds.MurckoScaffold import GetScaffoldForMol
 import os
 import time
+import click
 
 functional_groups = {
     "Alcohol": Chem.MolFromSmarts("[OX2H][CX4;!$(C([OX2H])[O,S,#7,#15])]"),
@@ -108,10 +109,11 @@ def match_smiles(
         return -1
 
 
-def score(preds: List[List[str]], tgt: List[str]) -> pd.DataFrame:
+def split(preds: List[List[str]], tgt: List[str]) -> pd.DataFrame:
     results = {'top1':[], 'top5':[], 'top10':[], 'else': []}
 
     for pred_smiles, tgt_smiles in tqdm.tqdm(zip(preds, tgt), total=len(tgt)):
+        
         mol = Chem.MolFromSmiles(tgt_smiles)
         tgt_smiles = Chem.MolToSmiles(mol)
         # hac = rdMolDescriptors.CalcNumHeavyAtoms(mol)
@@ -120,22 +122,23 @@ def score(preds: List[List[str]], tgt: List[str]) -> pd.DataFrame:
         # tgt_scaffold = GetScaffoldForMol(mol)
         # tgt_scaffold_smiles = Chem.MolToSmiles(tgt_scaffold)
 
-        pred_smiles_canon = list()
-        pred_scaffold = list()
-        for pred in pred_smiles:
+        pred_smiles_canon = [None] * len(pred_smiles)
+        # pred_scaffold = list()
+        for i,pred in enumerate(pred_smiles):
             try:
                 pred_mol = Chem.MolFromSmiles(pred)
 
                 if pred_mol is None:
                     raise ArgumentError("Invalid Smiles")
 
-                pred_smiles_canon.append(Chem.MolToSmiles(pred_mol))
+                pred_smiles_canon[i] = Chem.MolToSmiles(pred_mol)
 
-                pred_scaffold_mol = GetScaffoldForMol(pred_mol)
-                pred_scaffold.append(Chem.MolToSmiles(pred_scaffold_mol))
-            except ArgumentError:
+                # pred_scaffold_mol = GetScaffoldForMol(pred_mol)
+                # pred_scaffold.append(Chem.MolToSmiles(pred_scaffold_mol))
+            except ArgumentError as e:
                 continue
-            except Chem.rdchem.AtomValenceException:
+            except Chem.rdchem.AtomValenceException as e:
+                print(e)
                 print("pred: ",pred_smiles)
                 print("target: ",tgt_smiles)
                 continue
@@ -147,7 +150,12 @@ def score(preds: List[List[str]], tgt: List[str]) -> pd.DataFrame:
         # }
 
         # Score match of the smiles string
-        results_smiles = match_smiles(tgt_smiles, pred_smiles_canon)
+        try:
+            results_smiles = match_smiles(tgt_smiles, pred_smiles_canon)
+        except AssertionError as e:
+            print(e)
+            print("pred: ",pred_smiles)
+            print("target: ",tgt_smiles)
         # results[tgt_smiles].update(results_smiles)
         if results_smiles == 1: results['top1'].append(tgt_smiles)
         elif results_smiles == 5: results['top5'].append(tgt_smiles)
@@ -163,18 +171,20 @@ def score(preds: List[List[str]], tgt: List[str]) -> pd.DataFrame:
     return results
 
 
-# @click.command()
-# @click.option("--tgt_path", required=True, help="Path to the tgt file")
-# @click.option("--inference_path", required=True, help="Path to the inference file")
-# @click.option("--n_beams", default=10, help="Number of beams")
-def main(inference_path: str, tgt_path: str, save_path: str, n_beams: int = 10, output=False):
-    print('here')
+@click.command()
+@click.option("--tgt_path", required=True, help="Path to the tgt file")
+@click.option("--inference_path", required=True, help="Path to the inference file")
+@click.option("--save_path", required=True)
+@click.option("--n_beams", default=10, help="Number of beams")
+@click.option("--output", default=True)
+def main(inference_path: str, tgt_path: str, save_path: str, n_beams: int = 10, output=True):
     RDLogger.DisableLog("rdApp.*")
 
     preds, tgt = load_data(
         inference_path=inference_path, tgt_path=tgt_path, n_beams=n_beams
     )
-    results_smiles = score(preds, tgt)
+    results_smiles = split(preds, tgt)
+    print(results_smiles)
     if output:
         for c in ['top1', 'top5', 'top10', 'else']:
             with open(os.path.join(save_path, '{}.txt'.format(c)), 'w') as f:

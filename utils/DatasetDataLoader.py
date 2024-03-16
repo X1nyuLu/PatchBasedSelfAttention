@@ -63,11 +63,13 @@ def norm_spectrum(
 def interpolate_spectrum(
     spectrum: np.ndarray,
     new_x: np.ndarray,
-    orig_x: Optional[np.ndarray] = None,
+    orig_x: Optional[np.ndarray] #= None,
 ) -> List[np.ndarray]:
-    if orig_x is None:
-        orig_x = np.arange(400, 3982, 2)
+    # if orig_x is None:
+        # orig_x = np.arange(400, 3982, 2)
 
+    # print(orig_x.shape)
+    # print(spectrum.shape)
     intp = interpolate.interp1d(orig_x, spectrum)
 
     intp_spectrum = intp(new_x)
@@ -75,14 +77,14 @@ def interpolate_spectrum(
 
     return [intp_spectrum_norm]
 
-def augment_shift_horizontal_orig(spectrum: np.ndarray, new_x: np.ndarray) -> List[np.ndarray]:
-    orig_x = np.arange(400, 3982, 4)
-    set1 = spectrum[::2] # orig spec
-    set2 = np.concatenate([spectrum[1::2], np.reshape(set1[-1], 1)]) # shift 1 unit
+# def augment_shift_horizontal_orig(spectrum: np.ndarray, new_x: np.ndarray) -> List[np.ndarray]:
+#     orig_x = np.arange(400, 3982, 4)
+#     set1 = spectrum[::2] # orig spec
+#     set2 = np.concatenate([spectrum[1::2], np.reshape(set1[-1], 1)]) # shift 1 unit
 
-    aug_spec1 = interpolate_spectrum(set1, new_x, orig_x)[0]
-    aug_spec2 = interpolate_spectrum(set2, new_x, orig_x)[0]
-    return [aug_spec1, aug_spec2]
+#     aug_spec1 = interpolate_spectrum(set1, new_x, orig_x)[0]
+#     aug_spec2 = interpolate_spectrum(set2, new_x, orig_x)[0]
+#     return [aug_spec1, aug_spec2]
 
 class generateDataset(Dataset):
     def __init__(self, data, 
@@ -90,7 +92,8 @@ class generateDataset(Dataset):
                  spec_len=3200,
                  formula=False, formula_vocab=None, #formula_max_pad=15,
                  aug_mode=None, aug_num=0, smi_aug_num=0,
-                 max_shift=None, theta=0.01, alpha=1
+                 max_shift=None, theta=0.01, alpha=1,
+                 dataset_mode=None
                  ):
         """
         data: '.pkl' file or pandas.Dataframe()
@@ -98,11 +101,15 @@ class generateDataset(Dataset):
         smiles_vocab: torchtext.vocab.Vocab()
         formula_vocab: None or torchtext.vocab.Vocab()
         aug_mode: None or 'verticalNoise' or 'horizontalShift' or 'horizontalShiftNonFP' or 'SMILES'
+        dataset_mode: None or 'qm9'
+            if None, dataset from IBM
+            if 'qm9', orig_x is different
         """
 
         logging.basicConfig(level=logging.INFO)
         self.logger = logging.getLogger("Generate_Dataset")
         self.formula = formula
+        self.dataset_mode = dataset_mode
 
 
         if type(data) == str and os.path.isfile(data): 
@@ -131,26 +138,35 @@ class generateDataset(Dataset):
             self.formula_list, self.formula_max_len = self.formula2tensor(data["formula"], formula_vocab, #formula_max_pad=formula_max_pad,
                                                                           aug_mode=aug_mode, aug_num=aug_num, smi_aug_num=smi_aug_num)
             self.logger.info("FORMULA max len: {}".format(self.formula_max_len))
+        
+        
 
 
     def process_spec(self, spec_len, spec_data, aug_mode, aug_num, max_shift=None, theta=None, alpha=None, smi_aug_num=0):
-        new_x = np.linspace(400, 3980, spec_len)
+        
+        if self.dataset_mode is None:
+            orig_x = np.arange(400, 3982, 2)
+            new_x = np.linspace(400, 3980, spec_len)
+        elif self.dataset_mode == 'qm9':
+            orig_x = np.linspace(0,4000,3000)
+            new_x = np.linspace(400, 4000, spec_len)
+
         if aug_mode is None:
-            spec_list = [torch.tensor(interpolate_spectrum(i, new_x)[0]) for i in spec_data]
+            spec_list = [torch.tensor(interpolate_spectrum(i, new_x, orig_x)[0]) for i in spec_data]
 
         elif aug_mode == 'verticalNoise' or aug_mode == ['verticalNoise']:
             assert ((theta!=None) and (alpha!=None)), 'theta({}) and alpha({}) should be set.'.format(theta, alpha)
             spec_list = []
             # for spec in spec_data:
             for spec in tqdm(spec_data, desc="spectra | {}".format(str(aug_mode))):
-                spec_list.append(torch.tensor(interpolate_spectrum(spec, new_x)[0])) # original spec
+                spec_list.append(torch.tensor(interpolate_spectrum(spec, new_x, orig_x)[0])) # original spec
                 for i in range(aug_num):
-                    spec_list.append(self.vertical_noise(new_x, spec, theta=theta, alpha=alpha))
+                    spec_list.append(self.vertical_noise(new_x, spec, theta=theta, alpha=alpha, orig_x=orig_x))
                 
         elif aug_mode == 'horizontalShift' or aug_mode == ['horizontalShift']:
             spec_list = []
             for spec in tqdm(spec_data, desc="spectra | {}".format(str(aug_mode))):
-                spec_list.append(torch.tensor(interpolate_spectrum(spec, new_x)[0])) # original spec
+                spec_list.append(torch.tensor(interpolate_spectrum(spec, new_x, orig_x)[0])) # original spec
                 
                 shift = np.arange(-max_shift, max_shift + 1)
                 shift = shift[shift != 0] # shift distance != 0
@@ -158,7 +174,7 @@ class generateDataset(Dataset):
                 shift = np.random.choice(shift, size=aug_num, replace=False)
                 
                 for shift_i in shift:
-                    spec_list.append(self.shift_horizontal(spec, shift=shift_i, new_x=new_x))
+                    spec_list.append(self.shift_horizontal(spec, shift=shift_i, new_x=new_x, orig_x=orig_x))
                     
         elif aug_mode == 'horizontalShiftNonFP':
             spec_list = []
@@ -171,13 +187,13 @@ class generateDataset(Dataset):
                 shift = np.random.choice(shift, size=aug_num, replace=False)
                 
                 for shift_i in shift:
-                    spec_list.append(self.shift_horizontal_nonFP(spec, shift=shift_i, new_x=new_x))
+                    spec_list.append(self.shift_horizontal_nonFP(spec, shift=shift_i, new_x=new_x, orig_x=orig_x))
         elif aug_mode == 'SMILES' or aug_mode == ['SMILES'] :
             spec_list = []
             assert smi_aug_num != None and smi_aug_num > 0, 'smi_aug_num({}) should be larger than 0.'.format(smi_aug_num)
             for spec in tqdm(spec_data, desc="spectra | {}".format(str(aug_mode))):
                 # spec_list += [torch.tensor(interpolate_spectrum(spec, new_x)[0])] * (aug_num + 1)
-                spec_list += [torch.tensor(interpolate_spectrum(spec, new_x)[0])] * (smi_aug_num + 1)
+                spec_list += [torch.tensor(interpolate_spectrum(spec, new_x, orig_x)[0])] * (smi_aug_num + 1)
                 # for i in range(aug_num):
         
         # elif set(aug_mode) == set(['verticalNoise', 'horizontalShift']): 
@@ -199,7 +215,7 @@ class generateDataset(Dataset):
                     spec_list += [torch.tensor(interpolate_spectrum(spec, new_x)[0])] * (smi_aug_num + 1) # original spec
                 
                 for i in range(aug_num):
-                    spec_i = self.vertical_noise(new_x, spec, theta=theta, alpha=alpha)
+                    spec_i = self.vertical_noise(new_x, spec, theta=theta, alpha=alpha, orig_x=orig_x)
                     spec_i = self.shift_horizontal(spec_i, shift=shift[i], new_x=new_x, orig_x=new_x)
                     if set(aug_mode) == set(['verticalNoise', 'horizontalShift']):
                         spec_list.append(spec_i)
@@ -214,19 +230,19 @@ class generateDataset(Dataset):
             for spec in tqdm(spec_data, desc="spectra | {}".format(str(aug_mode))):
                 # spec_list += [torch.tensor(interpolate_spectrum(spec, new_x)[0])] # original spec
                 # spec_list += [torch.tensor(interpolate_spectrum(spec, new_x)[0])] * (aug_num + 1) # original spec
-                spec_list += [torch.tensor(interpolate_spectrum(spec, new_x)[0])] * (smi_aug_num + 1) # original spec
+                spec_list += [torch.tensor(interpolate_spectrum(spec, new_x, orig_x)[0])] * (smi_aug_num + 1) # original spec
                 # print()
                 # print(len(spec_list))
                 for i in range(aug_num):
                     # spec_list.append(self.vertical_noise(new_x, spec, theta=theta, alpha=alpha))
                     # spec_list += [self.vertical_noise(new_x, spec, theta=theta, alpha=alpha)] * (aug_num + 1)
-                    spec_list += [self.vertical_noise(new_x, spec, theta=theta, alpha=alpha)] * (smi_aug_num + 1)
+                    spec_list += [self.vertical_noise(new_x, spec, theta=theta, alpha=alpha, orig_x=orig_x)] * (smi_aug_num + 1)
                     # print(len(spec_list))
         elif set(aug_mode) == set(['horizontalShift', 'SMILES']): 
             spec_list = []
             # for spec in spec_data:
             for spec in tqdm(spec_data, desc="spectra | {}".format(str(aug_mode))):
-                spec_list += [torch.tensor(interpolate_spectrum(spec, new_x)[0])] * (smi_aug_num + 1)# original spec
+                spec_list += [torch.tensor(interpolate_spectrum(spec, new_x, orig_x)[0])] * (smi_aug_num + 1)# original spec
                 
                 shift = np.arange(-max_shift, max_shift + 1)
                 shift = shift[shift != 0] # shift distance != 0
@@ -234,12 +250,12 @@ class generateDataset(Dataset):
                 shift = np.random.choice(shift, size=aug_num, replace=False)
                 
                 for shift_i in shift:
-                    spec_list += [self.shift_horizontal(spec, shift=shift_i, new_x=new_x)] * (smi_aug_num + 1)
+                    spec_list += [self.shift_horizontal(spec, shift=shift_i, new_x=new_x, orig_x=orig_x)] * (smi_aug_num + 1)
             
         return spec_list
         
     
-    def vertical_noise(self, spec_x, spec_y, theta=0.01, alpha=1, orig_x=None):
+    def vertical_noise(self, spec_x, spec_y, orig_x, theta=0.01, alpha=1):
         """
         theta: threshold of points which will have noise
         alpha: extent of noise.
@@ -254,20 +270,20 @@ class generateDataset(Dataset):
         aug_y = spec_y * (1 + random_values)
         return interpolate_spectrum(aug_y, spec_x, orig_x)[0]
 
-    def shift_horizontal(self, spectrum, shift, new_x, orig_x=None):
-        if orig_x is None:
-            orig_x = np.arange(400, 3982, 2)
+    def shift_horizontal(self, spectrum, shift, new_x, orig_x):
+        # if orig_x is None:
+        #     orig_x = np.arange(400, 3982, 2)
         shifted_x = orig_x + shift
         interp_func = interpolate.interp1d(shifted_x, spectrum, bounds_error=False, fill_value=0)
         shifted_spectrum = interp_func(new_x)
         return norm_spectrum(shifted_spectrum)
         # return
     
-    def shift_horizontal_nonFP(self, spectrum, shift, new_x, threshold=1500):
+    def shift_horizontal_nonFP(self, spectrum, shift, new_x, orig_x, threshold=1500):
         """
         Only shift non-fingerprint area (x>1500cm-1)
         """
-        orig_x = np.arange(400, 3982, 2)
+        # orig_x = np.arange(400, 3982, 2)
 
         # split the spectrum
         mask = orig_x > threshold

@@ -9,7 +9,7 @@ import torch
 def build_vocab(data, vocab_save_path, vocab_filename_prefix, mode):
         """
         parameters:
-            data: pd.dataframe
+            data: pd.dataframe or list only contains smiles or formula
             vocab_save_path
             vocab_filename_prefix
             mode: 'smiles' or 'formula'
@@ -47,6 +47,7 @@ def split_smiles(smile: str) -> str:
     tokens = [token for token in regex.findall(smile)]
 
     if smile != "".join(tokens):
+        print(smile)
         raise ValueError(
             "Tokenised smiles does not match original: {} {}".format(tokens, smile)
         )

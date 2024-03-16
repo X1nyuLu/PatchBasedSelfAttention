@@ -19,6 +19,7 @@ dropout: 0.1
 data: /rds/projects/c/chenlv-ai-and-chemistry/wuwj/modified_ViT/30data.pkl
 vocab_formula: null
 vocab_smiles: null
+dataset_mode:
 split_testdata: True
 aug_mode: null # Data Augmentation
 testset_aug: null # Data Augmentation of test set

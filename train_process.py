@@ -71,7 +71,7 @@ class TrainVal:
                  spec_embed, spec_len=3200, spec_mask_len=400,
                  model=None, d_model=512, num_heads=8, layer_num=4, d_ff=2048, dropout=0.1,
                  batchsize=128, accum_iter=10, num_epochs=200, warmup=3000, base_lr=1.0,
-                 Resume=False,
+                 Resume=False, dataset_mode=None,
                  aug_mode=None, testset_aug=None, aug_num=0, smi_aug_num=0,
                  max_shift=None, theta=None, alpha=None,
                  formula=False, vocab_formula=None, formula_max_padding=None,
@@ -192,6 +192,7 @@ class TrainVal:
 
         # Dataset and Dataloader
         self.buildDatasetDataloader(data, data_df, spec_len, formula, logger,# vocab_smiles, vocab_formula, 
+                                    dataset_mode,
                                     aug_mode, testset_aug, aug_num, smi_aug_num,
                                     max_shift, theta, alpha, split_testdata, testTrain)
         
@@ -242,6 +243,7 @@ class TrainVal:
         logger.info(self.model)
     
     def buildDatasetDataloader(self, data, data_df, spec_len, formula, logger, #vocab_smiles, vocab_formula, 
+                               dataset_mode=None,
                                aug_mode=None, testset_aug=None, aug_num=0, smi_aug_num=0,
                                max_shift=None, theta=None, alpha=None,
                                split_testdata=True, testTrain=False):
@@ -271,14 +273,14 @@ class TrainVal:
                 
                 if testset_aug != None:
                     test_set_ = generateDataset(test_set, smiles_vocab=self.tgt_vocab, spec_len=spec_len, formula=formula, formula_vocab=self.formula_vocab, 
-                                                aug_mode=None,)
+                                                aug_mode=None, dataset_mode=dataset_mode)
                                                 # smiles_max_pad=self.tgt_max_padding, formula_max_pad=self.formula_max_padding)
                     torch.save(test_set_, os.path.join(data_path, 'test_set_noAug.pt'))
                     del test_set_
 
                 test_set = generateDataset(test_set, smiles_vocab=self.tgt_vocab, spec_len=spec_len, formula=formula, formula_vocab=self.formula_vocab, 
                                            aug_mode=testset_aug, aug_num=aug_num, max_shift=max_shift, theta=theta, alpha=alpha,
-                                           smi_aug_num=smi_aug_num)
+                                           smi_aug_num=smi_aug_num, dataset_mode=dataset_mode)
                                         #    smiles_max_pad=self.tgt_max_padding, formula_max_pad=self.formula_max_padding)
                 torch.save(test_set, os.path.join(data_path, 'test_set.pt'))
                 test_data_num = len(test_set)
@@ -295,13 +297,13 @@ class TrainVal:
 
             train_set = generateDataset(train_set, smiles_vocab=self.tgt_vocab, spec_len=spec_len, formula=formula, formula_vocab=self.formula_vocab, 
                                         aug_mode=aug_mode, aug_num=aug_num, max_shift=max_shift, theta=theta, alpha=alpha,
-                                        smi_aug_num=smi_aug_num)
+                                        smi_aug_num=smi_aug_num, dataset_mode=dataset_mode)
                                         # smiles_max_pad=self.tgt_max_padding, formula_max_pad=self.formula_max_padding)
             torch.save(train_set, os.path.join(data_path, 'train_set.pt'))
             
             val_set = generateDataset(val_set, smiles_vocab=self.tgt_vocab, spec_len=spec_len, formula=formula, formula_vocab=self.formula_vocab, 
                                       aug_mode=aug_mode, aug_num=aug_num, max_shift=max_shift, theta=theta, alpha=alpha,
-                                      smi_aug_num=smi_aug_num)
+                                      smi_aug_num=smi_aug_num, dataset_mode=dataset_mode)
                                     #   smiles_max_pad=self.tgt_max_padding, formula_max_pad=self.formula_max_padding)
             torch.save(val_set, os.path.join(data_path, 'val_set.pt'))
             

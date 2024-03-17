@@ -138,7 +138,6 @@ def split(preds: List[List[str]], tgt: List[str]) -> pd.DataFrame:
             except ArgumentError as e:
                 continue
             except Chem.rdchem.AtomValenceException as e:
-                print(e)
                 print("pred: ",pred_smiles)
                 print("target: ",tgt_smiles)
                 continue
@@ -153,14 +152,13 @@ def split(preds: List[List[str]], tgt: List[str]) -> pd.DataFrame:
         try:
             results_smiles = match_smiles(tgt_smiles, pred_smiles_canon)
         except AssertionError as e:
-            print(e)
             print("pred: ",pred_smiles)
             print("target: ",tgt_smiles)
         # results[tgt_smiles].update(results_smiles)
-        if results_smiles == 1: results['top1'].append(tgt_smiles)
-        elif results_smiles == 5: results['top5'].append(tgt_smiles)
-        elif results_smiles == 10: results["top10"].append(tgt_smiles)
-        elif results_smiles == -1: results['else'].append(tgt_smiles)
+        if results_smiles == 1: results['top1'].append([tgt_smiles, pred_smiles])
+        elif results_smiles == 5: results['top5'].append([tgt_smiles, pred_smiles])
+        elif results_smiles == 10: results["top10"].append([tgt_smiles, pred_smiles])
+        elif results_smiles == -1: results['else'].append([tgt_smiles, pred_smiles])
 
         # Score scaffold match
         # results_scaffold = match_smiles(
@@ -184,13 +182,17 @@ def main(inference_path: str, tgt_path: str, save_path: str, n_beams: int = 10, 
         inference_path=inference_path, tgt_path=tgt_path, n_beams=n_beams
     )
     results_smiles = split(preds, tgt)
-    print(results_smiles)
     if output:
         for c in ['top1', 'top5', 'top10', 'else']:
-            with open(os.path.join(save_path, '{}.txt'.format(c)), 'w') as f:
-                print(os.path.join(save_path, '{}.txt'.format(c)))
-                for smi in results_smiles[c]:
-                    f.write(smi+'\n')
+            with open(os.path.join(save_path, '{}_canonical_only.txt'.format(c)), 'w') as f:
+                for smi, preds_ in results_smiles[c]: f.write("{}\n".format(smi))
+            with open(os.path.join(save_path, '{}_compare.txt'.format(c)), 'w') as f:
+                for smi, preds_ in results_smiles[c]:
+                    f.write("TARGET: {}\n".format(smi))
+                    f.write("PREDICTIONS:\n")
+                    for pred_i in preds_:
+                        f.write("        "+pred_i)
+
         return results_smiles
 
 

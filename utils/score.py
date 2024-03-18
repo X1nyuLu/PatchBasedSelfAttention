@@ -1,7 +1,7 @@
 from ctypes import ArgumentError
 from typing import Dict, List, Tuple
 
-# import click
+import click
 import pandas as pd
 import tqdm
 from rdkit import Chem, RDLogger
@@ -114,19 +114,23 @@ def score(preds: List[List[str]], tgt: List[str]) -> pd.DataFrame:
         tgt_scaffold = GetScaffoldForMol(mol)
         tgt_scaffold_smiles = Chem.MolToSmiles(tgt_scaffold)
 
-        pred_smiles_canon = list()
-        pred_scaffold = list()
-        for pred in pred_smiles:
+        # pred_smiles_canon = list()
+        pred_smiles_canon = [None] * len(pred_smiles)
+        # pred_scaffold = list()
+        pred_scaffold = [None] * len(pred_smiles)
+        for i, pred in enumerate(pred_smiles):
             try:
                 pred_mol = Chem.MolFromSmiles(pred)
 
                 if pred_mol is None:
                     raise ArgumentError("Invalid Smiles")
 
-                pred_smiles_canon.append(Chem.MolToSmiles(pred_mol))
+                # pred_smiles_canon.append(Chem.MolToSmiles(pred_mol))
+                pred_smiles_canon[i] = Chem.MolToSmiles(pred_mol)
 
                 pred_scaffold_mol = GetScaffoldForMol(pred_mol)
-                pred_scaffold.append(Chem.MolToSmiles(pred_scaffold_mol))
+                # pred_scaffold.append(Chem.MolToSmiles(pred_scaffold_mol))
+                pred_scaffold[i] = Chem.MolToSmiles(pred_scaffold_mol)
             except ArgumentError:
                 continue
             except Chem.rdchem.AtomValenceException:
@@ -153,10 +157,11 @@ def score(preds: List[List[str]], tgt: List[str]) -> pd.DataFrame:
     return pd.DataFrame.from_dict(results, orient="index")
 
 
-# @click.command()
-# @click.option("--tgt_path", required=True, help="Path to the tgt file")
-# @click.option("--inference_path", required=True, help="Path to the inference file")
-# @click.option("--n_beams", default=10, help="Number of beams")
+@click.command()
+@click.option("--tgt_path", required=True, help="Path to the tgt file")
+@click.option("--inference_path", required=True, help="Path to the inference file")
+@click.option("--save_path")
+@click.option("--n_beams", default=10, help="Number of beams")
 def main(inference_path: str, tgt_path: str, save_path: str, n_beams: int = 10, ):
     RDLogger.DisableLog("rdApp.*")
 

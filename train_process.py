@@ -264,9 +264,13 @@ class TrainVal:
             if not os.path.exists(data_path): os.mkdir(data_path)
 
             if split_testdata:
-                train_set = data_df[:int(data_num*0.7)]
-                val_set = data_df[int(data_num*0.7):int(data_num*0.8)]
-                test_set = data_df[int(data_num*0.8):]
+                # train_set = data_df[:int(data_num*0.7)]
+                # val_set = data_df[int(data_num*0.7):int(data_num*0.8)]
+                # test_set = data_df[int(data_num*0.8):]
+
+                train_set = data_df[:int(data_num*0.85)]
+                val_set = data_df[int(data_num*0.85):int(data_num*0.9)]
+                test_set = data_df[int(data_num*0.9):]
                 logger.info("Original | train_set: {} data | val_set: {} data | test_set: {} data".format(train_set.shape[0],
                                                                                             val_set.shape[0],
                                                                                             test_set.shape[0]))
@@ -288,8 +292,11 @@ class TrainVal:
                 if formula: test_f_max_len =  test_set.formula_max_len
                 del test_set
             else:
-                train_set = data_df[:int(data_num*0.9)]
-                val_set = data_df[int(data_num*0.9):]
+                # train_set = data_df[:int(data_num*0.9)]
+                # val_set = data_df[int(data_num*0.9):]
+
+                train_set = data_df[:int(data_num*0.95)]
+                val_set = data_df[int(data_num*0.95):]
                 logger.info("Original | train_set: {} data | val_set: {} data".format(train_set.shape[0],
                                                                                       val_set.shape[0]))
                 
@@ -334,13 +341,11 @@ class TrainVal:
             else:
                 train_set = torch.load(os.path.join(data, 'train_set.pt'))
                 val_set = torch.load(os.path.join(data, 'val_set.pt'))
-            logger.info("train_set: {} data | val_set: {} data".format(train_set.shape[0],
-                                                                        val_set.shape[0]))
+            logger.info("train_set: {} data | val_set: {} data".format(len(train_set), len(val_set)))
                 
         else: 
             train_set, val_set = data
-            logger.info("train_set: {} data | val_set: {} data".format(train_set.shape[0],
-                                                                        val_set.shape[0]))
+            logger.info("train_set: {} data | val_set: {} data".format(len(train_set), len(val_set)))
             
 
         logger.info("Building dataloader...")
@@ -420,6 +425,7 @@ class TrainVal:
                                          mode="eval",
                                          report_step=self.report_step)
             self.writer.add_scalar("Val Loss", val_loss, epoch)
+            
             if val_loss < best_val_loss:
                 best_val_loss = val_loss
                 logger.info('Epoch {} | Saving model with the best val loss: {}'.format(epoch, best_val_loss))
@@ -427,8 +433,9 @@ class TrainVal:
                             'optimizer_state_dict': optimizer.state_dict(),
                             'lr_scheduler_state': lr_scheduler.state_dict()},
                             best_params_path)
-                self.earlystop_step = 1      
-            elif val_loss > best_val_loss + self.earlystop_delta:
+                if self.earlystop: self.earlystop_step = 1     
+                
+            if self.earlystop and (val_loss > best_val_loss + self.earlystop_delta):
                 self.earlystop_step += 1
                 if self.earlystop_step > self.earlystop_patience: 
                     logger.info("Early stop at epoch {}. val_loss: {} | best_val_loss: {}".format(epoch, val_loss, best_val_loss))

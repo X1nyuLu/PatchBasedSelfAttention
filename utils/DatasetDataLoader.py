@@ -209,10 +209,10 @@ class generateDataset(Dataset):
             # for spec in spec_data:
             for spec in tqdm(spec_data, desc="spectra | {}".format(str(aug_mode))):
                 if set(aug_mode) == set(['verticalNoise', 'horizontalShift']):
-                    spec_list.append(torch.tensor(interpolate_spectrum(spec, new_x)[0])) # original spec
+                    spec_list.append(torch.tensor(interpolate_spectrum(spec, new_x, orig_x)[0])) # original spec
                 elif set(aug_mode) == set(['verticalNoise', 'horizontalShift', 'SMILES']):
                     # spec_list += [torch.tensor(interpolate_spectrum(spec, new_x)[0])] * (aug_num + 1) # original spec
-                    spec_list += [torch.tensor(interpolate_spectrum(spec, new_x)[0])] * (smi_aug_num + 1) # original spec
+                    spec_list += [torch.tensor(interpolate_spectrum(spec, new_x, orig_x)[0])] * (smi_aug_num + 1) # original spec
                 
                 for i in range(aug_num):
                     spec_i = self.vertical_noise(new_x, spec, theta=theta, alpha=alpha, orig_x=orig_x)

@@ -157,11 +157,11 @@ def score(preds: List[List[str]], tgt: List[str]) -> pd.DataFrame:
     return pd.DataFrame.from_dict(results, orient="index")
 
 
-@click.command()
-@click.option("--tgt_path", required=True, help="Path to the tgt file")
-@click.option("--inference_path", required=True, help="Path to the inference file")
-@click.option("--save_path")
-@click.option("--n_beams", default=10, help="Number of beams")
+# @click.command()
+# @click.option("--inference_path", required=True, help="Path to the inference file")
+# @click.option("--tgt_path", required=True, help="Path to the tgt file")
+# @click.option("--save_path")
+# @click.option("--n_beams", default=10, help="Number of beams")
 def main(inference_path: str, tgt_path: str, save_path: str, n_beams: int = 10, ):
     RDLogger.DisableLog("rdApp.*")
 

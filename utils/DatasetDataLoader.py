@@ -389,7 +389,8 @@ class generateDataset(Dataset):
     
     def __len__(self):
         assert len(self.spec_list) == len(self.smi_list), "The number of spectra data({}) does not equal to that of SMILES data({}).".format(len(self.spec_list),len(self.smi_list))
-        assert len(self.spec_list) == len(self.formula_list), "The number of spectra data({}) does not equal to that of formula data({}).".format(len(self.spec_list), len(self.formula_list))
+        if self.formula:
+            assert len(self.spec_list) == len(self.formula_list), "The number of spectra data({}) does not equal to that of formula data({}).".format(len(self.spec_list), len(self.formula_list))
         return len(self.spec_list)
 
     def __getitem__(self, index):

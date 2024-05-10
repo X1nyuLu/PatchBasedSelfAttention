@@ -308,10 +308,13 @@ class TrainVal:
                                         # smiles_max_pad=self.tgt_max_padding, formula_max_pad=self.formula_max_padding)
             torch.save(train_set, os.path.join(data_path, 'train_set.pt'))
             
+            # val_set = generateDataset(val_set, smiles_vocab=self.tgt_vocab, spec_len=spec_len, formula=formula, formula_vocab=self.formula_vocab, 
+            #                           aug_mode=aug_mode, aug_num=aug_num, max_shift=max_shift, theta=theta, alpha=alpha,
+            #                           smi_aug_num=smi_aug_num, dataset_mode=dataset_mode)
+
             val_set = generateDataset(val_set, smiles_vocab=self.tgt_vocab, spec_len=spec_len, formula=formula, formula_vocab=self.formula_vocab, 
-                                      aug_mode=aug_mode, aug_num=aug_num, max_shift=max_shift, theta=theta, alpha=alpha,
-                                      smi_aug_num=smi_aug_num, dataset_mode=dataset_mode)
-                                    #   smiles_max_pad=self.tgt_max_padding, formula_max_pad=self.formula_max_padding)
+                                                aug_mode=None, dataset_mode=dataset_mode)
+            
             torch.save(val_set, os.path.join(data_path, 'val_set.pt'))
             
             
@@ -521,7 +524,7 @@ class TrainVal:
                 logger.info(
                     (
                         "Epoch Step: %6d | Accumulation Step: %3d | Loss: %6.3e "
-                        + "| Tokens / Sec: %7.1f | Learning Rate: %6.1e"
+                        + "| Tokens / Sec: %7.1f | Learning Rate: %6.3e"
                     )
                     % (i, n_accum, loss / batch.ntokens, tokens / elapsed, lr)
                 )

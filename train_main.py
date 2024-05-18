@@ -19,6 +19,8 @@ with open(args.train_para, 'r') as f:
 if config['spec_embed'] == 'EmbedPatchAttention':
     assert int(config['spec_mask_len']) == int(int(config['spec_len'])/int(config['patch_len'])), "`spec_mask_len` should be `spec_len` divided by `patch_len`."
     spec_embed = EmbedPatchAttention(spec_len=config['spec_len'], patch_len=config['patch_len'], d_model=config['d_model'], src_vocab=100)
+elif config['spec_embed'] == 'DirectEmbed':
+    spec_embed = SpecDirectEmbed(d_model=config['d_model'], src_vocab=100)
 
 # print(config['aug_mode'])
 # """

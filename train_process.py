@@ -335,7 +335,6 @@ class TrainVal:
             logger.info("smiles max len: {} | formula max len: {}".format(smi_max_len, formula_max_len))
             assert smi_max_len <= self.tgt_max_padding, "SMILES max length ({}) is larger than SMILES max padding ({}).".format(smi_max_len, self.tgt_max_padding)
             if formula: assert formula_max_len <= self.formula_max_padding, "Formula max length ({}) is larger than formula max padding ({}).".format(formula_max_len, self.formula_max_padding)
-
         elif os.path.isdir(data):
             assert os.path.exists(data), "`data` do not exists."
             if testTrain:

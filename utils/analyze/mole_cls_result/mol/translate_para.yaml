@@ -1,0 +1,30 @@
+# `null` will be read as NoneType
+
+# Model Parameters
+model: /rds/projects/c/chenlv-ai-and-chemistry/wuwj/FinalResult/2data_aug/sameTrainDataset/noise/alpha_5/train2/model/EPOCH_17.pt
+spec_embed: 'EmbedPatchAttention'
+spec_len: 3200
+patch_len: 64
+spec_mask_len: 50
+formula: True
+formula_max_padding: 15
+smiles_max_padding: 30
+d_model: 512
+num_heads: 8
+layer_num: 4
+d_ff: 2048
+dropout: 0.1
+
+# Data 
+test_data: /rds/projects/c/chenlv-ai-and-chemistry/wuwj/FinalResult/code/utils/analyze/mole_cls_result/mol/mol_dataset.pt
+vocab_formula: /rds/projects/c/chenlv-ai-and-chemistry/wuwj/FinalResult/0directly_train/withFormula/ps8_bs128_EmbedPatchAttention/train1/vocab/vocab_formula.pt
+vocab_smiles: /rds/projects/c/chenlv-ai-and-chemistry/wuwj/FinalResult/0directly_train/withFormula/ps8_bs128_EmbedPatchAttention/train1/vocab/vocab_smiles.pt
+
+# Translate Parameters
+save_path: /rds/projects/c/chenlv-ai-and-chemistry/wuwj/FinalResult/code/utils/analyze/mole_cls_result/mol
+batch_size: 256
+seed: 3234
+translate_mode: B # G:Greedy Search or B: Beam Search
+beam_width: 10
+n_best: 10
+testInf: False # If True, only translate 10 batches

@@ -17,6 +17,15 @@ with open(args.translate_para, 'r') as f:
 if config['spec_embed'] == 'EmbedPatchAttention':
     assert int(config['spec_mask_len']) == int(int(config['spec_len'])/int(config['patch_len'])), "`spec_mask_len` should be `spec_len` divided by `patch_len`."
     spec_embed = EmbedPatchAttention(spec_len=config['spec_len'], patch_len=config['patch_len'], d_model=config['d_model'], src_vocab=100)
+elif config['spec_embed'] == 'EPAFullToken':
+    assert int(config['spec_mask_len']) == int(int(config['spec_len'])/int(config['patch_len']))+1, "`spec_mask_len` should be (spec_len/patch_len) + 1."
+    spec_embed = EmbedPatchAttentionWithFullToken(spec_len=config['spec_len'], patch_len=config['patch_len'], d_model=config['d_model'], src_vocab=100)
+elif config['spec_embed'] == 'EPA3MoreTokens':
+    assert int(config['spec_mask_len']) == int(int(config['spec_len'])/int(config['patch_len']))+3, "`spec_mask_len` should be (spec_len/patch_len) + 3."
+    spec_embed = EmbedPatchAttentionWith3MoreTokens(spec_len=config['spec_len'], patch_len=config['patch_len'], d_model=config['d_model'], src_vocab=100)
+elif config['spec_embed'] == 'EPA400Tokens':
+    # assert int(config['spec_mask_len']) == int(int(config['spec_len'])/int(config['patch_len']))+400, "`spec_mask_len` should be (spec_len/patch_len) + 1."
+    spec_embed = EmbedPatchAttentionWith400Tokens(spec_len=config['spec_len'], patch_len=config['patch_len'], d_model=config['d_model'], src_vocab=100)                    
 elif config['spec_embed'] == 'DirectEmbed':
     spec_embed = SpecDirectEmbed(d_model=config['d_model'], src_vocab=100)
 # """

@@ -283,7 +283,7 @@ class Translate_Transformer:
             elif mode == "B":
                 # pred = self.beam_search(src, beam_width, n_best)
                 pred = self.beam_search_optimized(formula, spec, beam_width, n_best)
-                pred = pred.view(-1, pred.size(-1))
+                # pred = pred.view(-1, pred.size(-1))
             
             self.output_txtfile(pred,filename)
             # print(batch["smi"])

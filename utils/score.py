@@ -106,8 +106,15 @@ def score(preds: List[List[str]], tgt: List[str]) -> pd.DataFrame:
     results = dict()
 
     for pred_smiles, tgt_smiles in tqdm.tqdm(zip(preds, tgt), total=len(tgt)):
-        mol = Chem.MolFromSmiles(tgt_smiles)
-        tgt_smiles = Chem.MolToSmiles(mol)
+        try:
+            mol = Chem.MolFromSmiles(tgt_smiles)
+            if mol is None: raise Exception("Invalid tgt smiles","Mol is None")
+            tgt_smiles = Chem.MolToSmiles(mol)
+        except Exception as e:
+            print("{}: {}".format(tgt_smiles,e) )
+            continue
+        # mol = Chem.MolFromSmiles(tgt_smiles)
+        # tgt_smiles = Chem.MolToSmiles(mol)
         hac = rdMolDescriptors.CalcNumHeavyAtoms(mol)
         functional_groups = get_functional_groups(mol)
 

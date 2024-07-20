@@ -2,10 +2,15 @@ import torch
 import sys
 sys.path.append("/rds/projects/c/chenlv-ai-and-chemistry/wuwj/FinalResult/code")
 from utils.DatasetDataLoader import generateDataset, CreateDataloader, norm_spectrum, interpolate_spectrum, interpolate
+import matplotlib as mpl
+
 import matplotlib.pyplot as plt
+from matplotlib.pyplot import figure
 import numpy as np
 import os
 import pandas as pd
+from rdkit import Chem
+from rdkit.Chem.rdMolDescriptors import CalcMolFormula
 
 def vertical_noise(spec_x, spec_y, theta=0.01, alpha=1) -> np.ndarray:
     """
@@ -13,13 +18,17 @@ def vertical_noise(spec_x, spec_y, theta=0.01, alpha=1) -> np.ndarray:
     alpha: extent of noise.
     """
     spec_y = spec_y/max(spec_y) # y value of the highest peak is 1.
+    print(spec_y)
 
     random_values = np.zeros(spec_y.shape)
     indices =  spec_y > theta # Only add noise on peaks, in case it changed the meaning of the sepctrum
 
     # Uniformly sample random number between [-1, alpha-1)
     random_values[indices] = (np.random.rand(sum(indices))*alpha - 1)
+    print(random_values)
     aug_y = spec_y * (1 + random_values)
+    print(aug_y)
+    print(aug_y/max(aug_y))
     print(aug_y.shape)
     print(spec_x.shape)
     return interpolate_spectrum(aug_y, spec_x, orig_x=spec_x)[0]
@@ -109,6 +118,38 @@ def plot2specIn1fig(x, spec1, label1, spec2, label2, smi, savename, save_path):
     
 
 if __name__ == "__main__":
+    mol_info = pd.read_pickle("/rds/projects/c/chenlv-ai-and-chemistry/wuwj/FinalResult/code/utils/spec_plot/24544089/mol_info.pkl")
+    smi = mol_info.iloc[0]['smiles']
+    print(mol_info)
+    print(smi)
+    print(CalcMolFormula(Chem.MolFromSmiles(smi)))
+    orig_x = np.arange(400, 3982, 2)
+
+    sim_spec = mol_info.iloc[0]["sim_spec"]
+    # print(max(sim_spec))
+    # sim_spec = sim_spec/max(sim_spec)
+    sim_spec = interpolate_spectrum(sim_spec, orig_x, orig_x=orig_x)[0]
+    print(sim_spec)
+    # exp_spec = mol_info.iloc[0]["exp_spec"]
+    # exp_spec = exp_spec/max(exp_spec)
+
+    vn_spec = vertical_noise(orig_x,sim_spec,alpha=50)
+    print(vn_spec)
+    figure(figsize=(12,6))
+    # mpl.rc('font',family='Times New Roman')
+
+    # plt.plot(orig_x, vn_spec,color="#ec999b",alpha=0.8)
+
+    # plt.plot(orig_x, vn_spec,color="royalblue",alpha=0.4, label='Simulated spectra')
+    plt.plot(orig_x, sim_spec, color='red', label='Simulated spectra with adaptive noise')#,lw=0.8)
+    # plt.plot(orig_x, vn_spec,color="#ec999b",alpha=0.8)
+    plt.xticks([])
+    plt.yticks([])
+    # csfont = {'family':'Times New Roman'}
+    # plt.legend(prop=csfont)
+    # plt.legend()
+    plt.savefig('test_ori.png',dpi=200)
+    """
     # mol_spec = {}
     # exp_all_info = pd.read_csv("/rds/projects/c/chenlv-ai-and-chemistry/wuwj/FinalResult/experimentalData/alldata.csv")
     # cas_id = 24544089
@@ -192,7 +233,7 @@ if __name__ == "__main__":
                     # "sim_vn.png", save_path)
     # plot2specIn1fig(orig_x, sim_spec, "simulated spectrum", hs_spec, "horizontally shift", smi, 
                     # "sim_hs.png", save_path)
-    """
+    
     # dataset = "/rds/projects/c/chenlv-ai-and-chemistry/wuwj/FinalResult/3with_experimental_data/directlyTrain/noise/5_alpha/aug2/data/val_set.pt"
     # dataset = "/rds/projects/c/chenlv-ai-and-chemistry/wuwj/FinalResult/2data_aug/patch16_spec200/horizontalShift/100_shift/train/data/val_set.pt"
     # dataset = "/rds/projects/c/chenlv-ai-and-chemistry/wuwj/FinalResult/3with_experimental_data/directlyTrain/noise_smiaug/noiseaug2-smiaug1/data/val_set.pt"

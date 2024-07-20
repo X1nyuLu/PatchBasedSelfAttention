@@ -1,0 +1,5 @@
+11:01:59_01_Apr
+Results: Smiles Match
+Top 1: 25.000, Top 5: 50.000, Top 10: 75.000
+Results: Scaffold Match
+Top 1 Scaffold: 100.000, Top 5 Scaffold: 100.000, Top 10 Scaffold: 100.000

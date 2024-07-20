@@ -16,6 +16,10 @@ import FinalResult.code.utils.the_annotated_transformer as atf
 
 import copy
 
+def clones(module, N):
+    "Produce N identical layers."
+    return nn.ModuleList([copy.deepcopy(module) for _ in range(N)])
+
 class FormulaSpecEmbed(nn.Module):
     def __init__(self, formula_vocab, spec_embed, d_model=512,
                 #  spec_len=3200, patch_len=8, spec_vocab=100,

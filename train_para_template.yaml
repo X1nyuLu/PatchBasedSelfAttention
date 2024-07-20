@@ -16,7 +16,7 @@ d_ff: 2048
 dropout: 0.1
 
 # Data 
-data: /rds/projects/c/chenlv-ai-and-chemistry/wuwj/modified_ViT/30data.pkl
+data: 
 vocab_formula: null
 vocab_smiles: null
 dataset_mode:
@@ -30,7 +30,7 @@ theta:
 alpha: 
 
 # Train Parameters
-save_path: /rds/projects/c/chenlv-ai-and-chemistry/wuwj/FinalResult/0directly_train/withFormula/test_workflow
+save_path: 
 batch_size: 128
 num_epochs: 200
 accum_iter: 1

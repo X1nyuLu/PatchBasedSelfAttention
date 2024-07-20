@@ -3,8 +3,6 @@ import yaml
 # sys.path.append('/rds/projects/c/chenlv-ai-and-chemistry/wuwj/FinalResult')
 from train_process import TrainVal
 from model.spectra_process_layer import *
-
-
 import argparse
 
 parser = argparse.ArgumentParser(description='Training script.')
@@ -13,17 +11,12 @@ args = parser.parse_args()
 with open(args.train_para, 'r') as f:
     config = yaml.safe_load(f)
 
-# learning_rate = config['learning_rate']
-# batch_size = config['batch_size']
-# epochs = config['epochs']
 if config['spec_embed'] == 'EmbedPatchAttention':
     assert int(config['spec_mask_len']) == int(int(config['spec_len'])/int(config['patch_len'])), "`spec_mask_len` should be `spec_len` divided by `patch_len`."
     spec_embed = EmbedPatchAttention(spec_len=config['spec_len'], patch_len=config['patch_len'], d_model=config['d_model'], src_vocab=100)
 elif config['spec_embed'] == 'DirectEmbed':
     spec_embed = SpecDirectEmbed(d_model=config['d_model'], src_vocab=100)
 
-# print(config['aug_mode'])
-# """
 TRAIN = TrainVal(data=config['data'], 
                  save_path=config['save_path'],
                  vocab_smiles=config['vocab_smiles'],
@@ -64,5 +57,3 @@ TRAIN = TrainVal(data=config['data'],
                  )
                  
 TRAIN.train_worker()
-
-# """

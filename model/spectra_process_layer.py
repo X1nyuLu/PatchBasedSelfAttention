@@ -1,19 +1,13 @@
 import torch
 import torch.nn as nn
-from torch.nn.functional import pad
-import math
+# from torch.nn.functional import pad
+# import math
 
 
-import sys
-sys.path.append("/rds/projects/c/chenlv-ai-and-chemistry/wuwj/")
-# import Transformer_Code.train_annotated_transformer.the_annotated_transformer as atf
-import FinalResult.code.utils.the_annotated_transformer as atf
-# import IRtoMol.scripts.prepare_data as prepdata
-# import Transformer_Code.train_main_singleGPU as tms
-# from modified_ViT.model.ref.PatchTST_layer import *
-
-# import pandas as pd
-# import numpy as np
+# import sys
+# sys.path.append("/rds/projects/c/chenlv-ai-and-chemistry/wuwj/")
+# import FinalResult.code.utils.the_annotated_transformer as atf
+import utils.the_annotated_transformer as atf
 
 class SpecDirectEmbed(nn.Module):
     def __init__(self, d_model=512, src_vocab=100) -> None:

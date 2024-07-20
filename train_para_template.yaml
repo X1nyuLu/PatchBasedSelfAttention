@@ -1,13 +1,13 @@
 # `null` will be read as NoneType
 
 # Model Parameters
-formula: True
-formula_max_padding: 15
 model: null
 spec_embed: 'EmbedPatchAttention'
 spec_len: 3200
 patch_len: 8
 spec_mask_len: 400
+formula: True
+formula_max_padding: 15
 smiles_max_padding: 40
 d_model: 512
 num_heads: 8
@@ -17,9 +17,9 @@ dropout: 0.1
 
 # Data 
 data: 
-vocab_formula: null
-vocab_smiles: null
-dataset_mode:
+vocab_formula: 
+vocab_smiles: 
+dataset_mode: #!!!
 split_testdata: True
 aug_mode: null # Data Augmentation
 testset_aug: null # Data Augmentation of test set
@@ -33,7 +33,7 @@ alpha:
 save_path: 
 batch_size: 128
 num_epochs: 200
-accum_iter: 1
+accum_iter: 1 #!!!
 base_lr: 1.0
 warmup_steps: 3000
 Resume: False
@@ -42,5 +42,5 @@ seed: 3234
 
 earlystop_delta: 0.08
 earlystop_patience: 5
-check_point_step: 20
 report_step: 40
+check_point_step: 20

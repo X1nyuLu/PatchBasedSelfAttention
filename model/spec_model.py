@@ -1,5 +1,5 @@
-import sys
-sys.path.append("FinalResult")
+# import sys
+# sys.path.append("FinalResult")
 import utils.the_annotated_transformer as atf
 import torch.nn as nn
 import copy

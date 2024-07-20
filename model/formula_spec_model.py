@@ -3,17 +3,11 @@ import torch.nn as nn
 # from torch.nn.functional import pad
 
 
-import sys
-sys.path.append("/rds/projects/c/chenlv-ai-and-chemistry/wuwj/")
-# import Transformer_Code.train_annotated_transformer.the_annotated_transformer as atf
-import FinalResult.code.utils.the_annotated_transformer as atf
-# import IRtoMol.scripts.prepare_data as prepdata
-# import Transformer_Code.train_main_singleGPU as tms
-# from modified_ViT.model.spectra_process_layer import *
+# import sys
+# sys.path.append("/rds/projects/c/chenlv-ai-and-chemistry/wuwj/")
+# import FinalResult.code.utils.the_annotated_transformer as atf
 
-# import pandas as pd
-# import numpy as np
-
+import utils.the_annotated_transformer as atf
 import copy
 
 def clones(module, N):

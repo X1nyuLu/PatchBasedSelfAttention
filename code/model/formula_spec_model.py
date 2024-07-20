@@ -1,11 +1,5 @@
 import torch
 import torch.nn as nn
-# from torch.nn.functional import pad
-
-
-# import sys
-# sys.path.append("/rds/projects/c/chenlv-ai-and-chemistry/wuwj/")
-# import FinalResult.code.utils.the_annotated_transformer as atf
 
 import utils.the_annotated_transformer as atf
 import copy
@@ -21,7 +15,6 @@ class FormulaSpecEmbed(nn.Module):
         super(FormulaSpecEmbed, self).__init__()
 
         self.formula_embed = atf.Embeddings(d_model=d_model, vocab=formula_vocab)
-        # self.spec_embed = EmbedPatchAttention(spec_len=spec_len, patch_len=patch_len, d_model=d_model, src_vocab=spec_vocab)
         self.spec_embed = spec_embed
 
     def forward(self, formula, spec):
@@ -32,7 +25,6 @@ class FormulaSpecEmbed(nn.Module):
 
 def make_model(
     spec_embed, formula_vocab, tgt_vocab, 
-    # spec_len=3200, patch_len=8,
     N=4, d_model=512, d_ff=2048, h=8, dropout=0.1
 ):
     
@@ -40,8 +32,6 @@ def make_model(
     attn = atf.MultiHeadedAttention(h, d_model)
     ff = atf.PositionwiseFeedForward(d_model, d_ff, dropout)
     position = atf.PositionalEncoding(d_model, dropout)
-    # src_embed = FormulaSpecEmbed(formula_vocab, d_model, spec_len=spec_len, patch_len=patch_len)
-    # src_embed = FormulaSpecEmbed(formula_vocab, spec_embed, d_model, spec_len=spec_len, patch_len=patch_len)
     src_embed = FormulaSpecEmbed(formula_vocab, spec_embed, d_model)
     model = EncoderDecoder(
         atf.Encoder(atf.EncoderLayer(d_model, c(attn), c(ff), dropout), N),
@@ -51,8 +41,6 @@ def make_model(
         atf.Generator(d_model, tgt_vocab),
     )
 
-    # This was important from their code.
-    # Initialize parameters with Glorot / fan_avg.
     for p in model.parameters():
         if p.dim() > 1:
             nn.init.xavier_uniform_(p)

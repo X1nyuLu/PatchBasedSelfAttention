@@ -1,7 +1,7 @@
 # `null` will be read as NoneType
 
 # Model Parameters
-model: /rds/projects/c/chenlv-ai-and-chemistry/wuwj/FinalResult/2data_aug/sameTrainDataset/noise_smiles/train3/model/best_model_optimizer_params.tar
+model: 
 spec_embed: 'EmbedPatchAttention'
 spec_len: 3200
 patch_len: 64

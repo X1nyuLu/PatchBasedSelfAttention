@@ -1,4 +1,4 @@
-from translate_process import Translate_Transformer
+from inference_process import Translate_Transformer
 from model.spectra_process_layer import *
 from utils.score import main as score_main
 

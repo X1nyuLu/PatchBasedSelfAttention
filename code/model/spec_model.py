@@ -20,8 +20,6 @@ def make_model(
         atf.Generator(d_model, tgt_vocab),
     )
 
-    # This was important from their code.
-    # Initialize parameters with Glorot / fan_avg.
     for p in model.parameters():
         if p.dim() > 1:
             nn.init.xavier_uniform_(p)

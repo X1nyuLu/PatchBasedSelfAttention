@@ -10,12 +10,6 @@ import torchtext
 import time
 import pandas as pd
 
-# import sys
-# sys.path.append("/rds/projects/c/chenlv-ai-and-chemistry/wuwj/")
-# import Transformer_Code.train_annotated_transformer.the_annotated_transformer as atf
-# from modified_ViT.utils.newDatasetDataLoader_withAug import generateDataset, CreateDataloader
-# from modified_ViT.model.spectra_process_layer import *
-# from modified_ViT.model.formula_spec_model import make_model
 
 import utils.the_annotated_transformer as atf
 from utils.DatasetDataLoader import generateDataset, CreateDataloader, set_random_seed
@@ -275,14 +269,14 @@ class TrainVal:
                 
                 if testset_aug != None:
                     test_set_ = generateDataset(test_set, smiles_vocab=self.tgt_vocab, spec_len=spec_len, formula=formula, formula_vocab=self.formula_vocab, 
-                                                aug_mode=None, dataset_mode=dataset_mode)
+                                                aug_mode=None)#, dataset_mode=dataset_mode)
                                                 # smiles_max_pad=self.tgt_max_padding, formula_max_pad=self.formula_max_padding)
                     torch.save(test_set_, os.path.join(data_path, 'test_set_noAug.pt'))
                     del test_set_
 
                 test_set = generateDataset(test_set, smiles_vocab=self.tgt_vocab, spec_len=spec_len, formula=formula, formula_vocab=self.formula_vocab, 
                                            aug_mode=testset_aug, aug_num=aug_num, max_shift=max_shift, theta=theta, alpha=alpha,
-                                           smi_aug_num=smi_aug_num, dataset_mode=dataset_mode)
+                                           smi_aug_num=smi_aug_num)#, dataset_mode=dataset_mode)
                                         #    smiles_max_pad=self.tgt_max_padding, formula_max_pad=self.formula_max_padding)
                 torch.save(test_set, os.path.join(data_path, 'test_set.pt'))
                 test_data_num = len(test_set)

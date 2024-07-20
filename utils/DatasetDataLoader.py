@@ -4,24 +4,19 @@ import torch
 from torch.nn.functional import pad
 from torch.utils.data import DataLoader, Dataset
 
-import logging
-from tqdm import tqdm
-
 import pandas as pd
 import numpy as np
+import logging
 import random
-
-import sys
-# sys.path.append("/rds/projects/c/chenlv-ai-and-chemistry/wuwj/")
-# import IRtoMol.scripts.prepare_data as prepdata
-from typing import Dict, List, Optional, Protocol, Tuple
-from scipy import interpolate
-sys.path.append("/rds/projects/c/chenlv-ai-and-chemistry/wuwj/FinalResult/code")
-from utils.SmilesEnumerator import SmilesEnumerator
-from rdkit import Chem
-
 import re
 import os
+
+from typing import List, Optional, Tuple
+from scipy import interpolate
+from tqdm import tqdm
+
+from utils.SmilesEnumerator import SmilesEnumerator
+
 
 def split_smiles(smile: str) -> list:
     pattern_full = r"(\[[^\]]+]|Br?|Cl?|N|O|S|P|F|I|b|c|n|o|s|p|\(|\)|\.|.|=|#|-|\+|\\\\|\/|:|~|@|\?|>|\*|\$|\%[0-9]{2}|[0-9])"
@@ -47,7 +42,6 @@ def split_formula(formula: str) -> list:
                 formula_split, formula
             )
         )
-    # return " ".join(formula_split)
     return formula_split
 
 
@@ -63,13 +57,9 @@ def norm_spectrum(
 def interpolate_spectrum(
     spectrum: np.ndarray,
     new_x: np.ndarray,
-    orig_x: Optional[np.ndarray] #= None,
+    orig_x: Optional[np.ndarray] 
 ) -> List[np.ndarray]:
-    # if orig_x is None:
-        # orig_x = np.arange(400, 3982, 2)
-
-    # print(orig_x.shape)
-    # print(spectrum.shape)
+    
     intp = interpolate.interp1d(orig_x, spectrum)
 
     intp_spectrum = intp(new_x)
@@ -77,23 +67,14 @@ def interpolate_spectrum(
 
     return [intp_spectrum_norm]
 
-# def augment_shift_horizontal_orig(spectrum: np.ndarray, new_x: np.ndarray) -> List[np.ndarray]:
-#     orig_x = np.arange(400, 3982, 4)
-#     set1 = spectrum[::2] # orig spec
-#     set2 = np.concatenate([spectrum[1::2], np.reshape(set1[-1], 1)]) # shift 1 unit
-
-#     aug_spec1 = interpolate_spectrum(set1, new_x, orig_x)[0]
-#     aug_spec2 = interpolate_spectrum(set2, new_x, orig_x)[0]
-#     return [aug_spec1, aug_spec2]
 
 class generateDataset(Dataset):
     def __init__(self, data, 
-                 smiles_vocab, #smiles_max_pad=40,
+                 smiles_vocab, 
                  spec_len=3200,
-                 formula=False, formula_vocab=None, #formula_max_pad=15,
+                 formula=False, formula_vocab=None, 
                  aug_mode=None, aug_num=0, smi_aug_num=0,
                  max_shift=None, theta=0.01, alpha=1,
-                 dataset_mode=None
                  ):
         """
         data: '.pkl' file or pandas.Dataframe()
@@ -101,23 +82,18 @@ class generateDataset(Dataset):
         smiles_vocab: torchtext.vocab.Vocab()
         formula_vocab: None or torchtext.vocab.Vocab()
         aug_mode: None or 'verticalNoise' or 'horizontalShift' or 'horizontalShiftNonFP' or 'SMILES'
-        dataset_mode: None or 'qm9'
-            if None, dataset from IBM
-            if 'qm9', orig_x is different
+        
         """
 
         logging.basicConfig(level=logging.INFO)
         self.logger = logging.getLogger("Generate_Dataset")
         self.formula = formula
-        self.dataset_mode = dataset_mode
-
 
         if type(data) == str and os.path.isfile(data): 
             assert os.path.exists(data), "Data does not exist: {}".format(data)
             data = pd.read_pickle(data)
         else: data = data
 
-        # print(type(aug_mode))
         if type(aug_mode) == list:
             for i in aug_mode:
                 assert i in [ None, 'verticalNoise', 'horizontalShift', 'horizontalShiftNonFP', 'SMILES'], "Please check aug_mode set"
@@ -144,12 +120,8 @@ class generateDataset(Dataset):
 
     def process_spec(self, spec_len, spec_data, aug_mode, aug_num, max_shift=None, theta=None, alpha=None, smi_aug_num=0):
         
-        if self.dataset_mode is None:
-            orig_x = np.arange(400, 3982, 2)
-            new_x = np.linspace(400, 3980, spec_len)
-        elif self.dataset_mode == 'qm9':
-            orig_x = np.linspace(0,4000,3000)
-            new_x = np.linspace(400, 4000, spec_len)
+        orig_x = np.arange(400, 3982, 2)
+        new_x = np.linspace(400, 3980, spec_len)
 
         if aug_mode is None:
             spec_list = [torch.tensor(interpolate_spectrum(i, new_x, orig_x)[0]) for i in spec_data]
@@ -157,7 +129,7 @@ class generateDataset(Dataset):
         elif aug_mode == 'verticalNoise' or aug_mode == ['verticalNoise']:
             assert ((theta!=None) and (alpha!=None)), 'theta({}) and alpha({}) should be set.'.format(theta, alpha)
             spec_list = []
-            # for spec in spec_data:
+
             for spec in tqdm(spec_data, desc="spectra | {}".format(str(aug_mode))):
                 spec_list.append(torch.tensor(interpolate_spectrum(spec, new_x, orig_x)[0])) # original spec
                 for i in range(aug_num):
@@ -192,11 +164,8 @@ class generateDataset(Dataset):
             spec_list = []
             assert smi_aug_num != None and smi_aug_num > 0, 'smi_aug_num({}) should be larger than 0.'.format(smi_aug_num)
             for spec in tqdm(spec_data, desc="spectra | {}".format(str(aug_mode))):
-                # spec_list += [torch.tensor(interpolate_spectrum(spec, new_x)[0])] * (aug_num + 1)
                 spec_list += [torch.tensor(interpolate_spectrum(spec, new_x, orig_x)[0])] * (smi_aug_num + 1)
-                # for i in range(aug_num):
         
-        # elif set(aug_mode) == set(['verticalNoise', 'horizontalShift']): 
         elif ('verticalNoise' in aug_mode) and ('horizontalShift' in aug_mode):
             assert ((theta!=None) and (alpha!=None)), 'theta({}) and alpha({}) should be set.'.format(theta, alpha)
             assert aug_num <= 2*max_shift, "aug_num({}) should be less than 2*max_shift(2*{})".format(aug_num, max_shift)
@@ -206,12 +175,10 @@ class generateDataset(Dataset):
             shift = np.random.choice(shift, size=aug_num, replace=False)
             
             spec_list = []
-            # for spec in spec_data:
             for spec in tqdm(spec_data, desc="spectra | {}".format(str(aug_mode))):
                 if set(aug_mode) == set(['verticalNoise', 'horizontalShift']):
                     spec_list.append(torch.tensor(interpolate_spectrum(spec, new_x, orig_x)[0])) # original spec
                 elif set(aug_mode) == set(['verticalNoise', 'horizontalShift', 'SMILES']):
-                    # spec_list += [torch.tensor(interpolate_spectrum(spec, new_x)[0])] * (aug_num + 1) # original spec
                     spec_list += [torch.tensor(interpolate_spectrum(spec, new_x, orig_x)[0])] * (smi_aug_num + 1) # original spec
                 
                 for i in range(aug_num):
@@ -220,27 +187,17 @@ class generateDataset(Dataset):
                     if set(aug_mode) == set(['verticalNoise', 'horizontalShift']):
                         spec_list.append(spec_i)
                     elif set(aug_mode) == set(['verticalNoise', 'horizontalShift', 'SMILES']):
-                        # spec_list += [spec_i] * (aug_num + 1)
                         spec_list += [spec_i] * (smi_aug_num + 1)
         
         elif set(aug_mode) == set(['verticalNoise', 'SMILES']): 
             assert ((theta!=None) and (alpha!=None)), 'theta({}) and alpha({}) should be set.'.format(theta, alpha)
             spec_list = []
-            # for spec in spec_data:
             for spec in tqdm(spec_data, desc="spectra | {}".format(str(aug_mode))):
-                # spec_list += [torch.tensor(interpolate_spectrum(spec, new_x)[0])] # original spec
-                # spec_list += [torch.tensor(interpolate_spectrum(spec, new_x)[0])] * (aug_num + 1) # original spec
                 spec_list += [torch.tensor(interpolate_spectrum(spec, new_x, orig_x)[0])] * (smi_aug_num + 1) # original spec
-                # print()
-                # print(len(spec_list))
                 for i in range(aug_num):
-                    # spec_list.append(self.vertical_noise(new_x, spec, theta=theta, alpha=alpha))
-                    # spec_list += [self.vertical_noise(new_x, spec, theta=theta, alpha=alpha)] * (aug_num + 1)
                     spec_list += [self.vertical_noise(new_x, spec, theta=theta, alpha=alpha, orig_x=orig_x)] * (smi_aug_num + 1)
-                    # print(len(spec_list))
         elif set(aug_mode) == set(['horizontalShift', 'SMILES']): 
             spec_list = []
-            # for spec in spec_data:
             for spec in tqdm(spec_data, desc="spectra | {}".format(str(aug_mode))):
                 spec_list += [torch.tensor(interpolate_spectrum(spec, new_x, orig_x)[0])] * (smi_aug_num + 1)# original spec
                 
@@ -271,37 +228,10 @@ class generateDataset(Dataset):
         return interpolate_spectrum(aug_y, spec_x, orig_x)[0]
 
     def shift_horizontal(self, spectrum, shift, new_x, orig_x):
-        # if orig_x is None:
-        #     orig_x = np.arange(400, 3982, 2)
         shifted_x = orig_x + shift
         interp_func = interpolate.interp1d(shifted_x, spectrum, bounds_error=False, fill_value=0)
         shifted_spectrum = interp_func(new_x)
         return norm_spectrum(shifted_spectrum)
-        # return
-    
-    def shift_horizontal_nonFP(self, spectrum, shift, new_x, orig_x, threshold=1500):
-        """
-        Only shift non-fingerprint area (x>1500cm-1)
-        """
-        # orig_x = np.arange(400, 3982, 2)
-
-        # split the spectrum
-        mask = orig_x > threshold
-        x_right = orig_x[mask]
-        spectrum_right = spectrum[mask]
-        
-        # shift the part of x > threshold
-        x_right_shifted = x_right + shift
-        
-        # create a spectrum after shift
-        interp_func = interpolate.interp1d(x_right_shifted, spectrum_right, bounds_error=False, fill_value=0)
-        
-        # ensure the spectrum's continuity 
-        spectrum_shifted = np.where(orig_x <= threshold, spectrum, interp_func(orig_x))
-
-        
-        # return norm_spectrum(spectrum_shifted)
-        return interpolate_spectrum(spectrum_shifted, new_x, orig_x)[0]
 
     def smiles2tensor(self, smi_data, vocab, aug_mode, aug_num, smi_aug_num=0):
         new_lines = []
@@ -311,7 +241,6 @@ class generateDataset(Dataset):
 
             smi_ori = torch.tensor([ vocab[token] for token in split_smiles(smi)])
             len_list.append(smi_ori.shape[0])
-            # print(smi)
             if aug_mode is None: new_lines += [smi_ori]
             elif aug_mode == 'SMILES' or 'SMILES' in aug_mode:
                 smi_tensor_list = [smi_ori]                
@@ -320,14 +249,12 @@ class generateDataset(Dataset):
                 aug_smi_list = []
                 j = 0
                 smi_tryNum = {}
-                # while j < aug_num:
                 while j < smi_aug_num:
                     smi_j = sme.randomize_smiles(smi)
 
                     # The number of some molecules' SMILES are less than aug num, like C1CCCC1, COC.
                     if smi_j in aug_smi_list: 
                         if smi_j in smi_tryNum: 
-                            # if smi_tryNum[smi_j] > aug_num: pass
                             if smi_tryNum[smi_j] > smi_aug_num: pass
                             else: 
                                 smi_tryNum[smi_j] += 1
@@ -335,9 +262,6 @@ class generateDataset(Dataset):
                         else: 
                             smi_tryNum[smi_j] = 1
                             continue
-                        # if len(set(aug_smi_list)) == 1: pass 
-                        # else: 
-                            # continue
                     aug_smi_list.append(smi_j)
 
                     smi_j_ = torch.tensor([ vocab[token] for token in split_smiles(smi_j)])
@@ -346,19 +270,13 @@ class generateDataset(Dataset):
 
                     j += 1
                 
-                # new_lines += smi_tensor_list
-                
                 if aug_mode == 'SMILES' or aug_mode == ['SMILES']:
                     new_lines += smi_tensor_list
                 elif type(aug_mode) == list:
-                    # new_lines += smi_tensor_list * (len(aug_mode)-1) * (aug_num+1)
                     new_lines += smi_tensor_list * (aug_num+1)
 
-            # elif aug_mode == 'verticalNoise' or aug_mode == 'horizontalShift' or aug_mode=='horizontalShiftNonFP':
-            # elif aug_mode != None:
             else:
                 new_lines += [smi_ori] * (aug_num+1)
-            # print(new_lines)
             if max(len_list) > max_len:
                 max_len = max(len_list)
             
@@ -375,13 +293,9 @@ class generateDataset(Dataset):
                 max_len = line.shape[0]
             
 
-            # if aug_mode == 'verticalNoise' or aug_mode == 'horizontalShift' or aug_mode=='horizontalShiftNonFP' or aug_mode=='SMILES':
             if aug_mode is None: new_lines.append(line)
-            # elif type(aug_mode) == str or len(aug_mode) == 1:
             elif aug_mode == 'SMILES' or aug_mode == ['SMILES']:
                     new_lines += [line] * (smi_aug_num+1)
-                # else:
-                    # new_lines += [line] * (aug_num+1)
             elif type(aug_mode) == list and 'SMILES' in aug_mode:
                 new_lines += [line] * (aug_num+1) * (smi_aug_num+1)
             else: new_lines += [line] * (aug_num+1)
@@ -394,7 +308,6 @@ class generateDataset(Dataset):
         return len(self.spec_list)
 
     def __getitem__(self, index):
-        # print("index: ", index)
         spec = self.spec_list[index]
         smi = self.smi_list[index]
 
@@ -483,48 +396,3 @@ def set_random_seed(seed):
         # This one is needed for various tranfroms
         np.random.seed(seed)
 
-
-if __name__ == "__main__":
-    # pass
-    """
-    formula_vocab = torch.load("/rds/projects/c/chenlv-ai-and-chemistry/wuwj/modified_ViT/utils/buildVocab/vocab_formula.pt")
-    smiles_vocab = torch.load("/rds/projects/c/chenlv-ai-and-chemistry/wuwj/modified_ViT/utils/buildVocab/vocab_smiles.pt")
-    data = "/rds/projects/c/chenlv-ai-and-chemistry/wuwj/modified_ViT/30data.pkl"
-
-    # dataset = generateDataset(data,smiles_vocab, )
-    dataset = generateDataset(data,smiles_vocab, 
-                            #   formula=True, formula_vocab=formula_vocab,
-                            #   aug_mode="horizontalShift", aug_num=3, max_shift=500,
-                              aug_mode="horizontalShiftNonFP", aug_num=3, max_shift=500
-                              )
-    data_df = pd.read_pickle(data)
-    # spec = data_df['spectra'][0]
-    # print(spec)
-    import matplotlib.pyplot as plt
-    # x = np.arange(400,3982,2)
-    # plt.figure()
-    # plt.plot(x, spec, 'b-')
-    # # plt.plot(x, dataset.augment_shift_horizontal(spec, max_shift=-100), 'y-')
-    # plt.plot(x, dataset.shift_spectrum_partially(spec, shift=-50), 'y-')
-    # plt.savefig('test_hori_partial_aug_50.png')
-    dataloader_ = CreateDataloader(2,0, 1,40,
-                                #    formula=True,formula_max_pad=15
-                                   )
-    dataloader = dataloader_.dataloader(dataset, 3, shuffle=False)
-    save_path = "/rds/projects/c/chenlv-ai-and-chemistry/wuwj/FinalResult/code/utils/aug_test"
-    for batch in dataloader:
-        # print(batch)
-        spec = batch['spec']
-        # x = np.arange(400,3982,2)
-        x = np.linspace(400, 3980, 3200)
-
-        # plt.figure()
-        # plt.plot(x, spec[0], 'b-')
-        # plt.plot(x, spec[1], 'y-')
-        # plt.plot(x, spec[2], 'g-')
-        # plt.savefig(os.path.join(save_path,'test_hori_partial_aug_3.png'))
-        break
-    """
-    # a = 'C=C'
-    # print(len(split_smiles(a)))
-    pass

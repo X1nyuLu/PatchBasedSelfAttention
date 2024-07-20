@@ -1,8 +1,5 @@
 import os
 from torchtext.vocab import build_vocab_from_iterator
-import sys
-sys.path.append("/rds/projects/c/chenlv-ai-and-chemistry/wuwj/")
-import pandas as pd
 import re
 import torch
 
@@ -52,7 +49,6 @@ def split_smiles(smile: str) -> str:
             "Tokenised smiles does not match original: {} {}".format(tokens, smile)
         )
 
-    # return " ".join(tokens)
     return tokens
 
 def split_formula(formula: str) -> str:
@@ -66,21 +62,8 @@ def split_formula(formula: str) -> str:
                 formula_split, formula
             )
         )
-    # return " ".join(formula_split)
     return formula_split
 
-
-
-# if __name__ == "__main__":
-#     data = pd.read_pickle("/rds/projects/c/chenlv-ai-and-chemistry/wuwj/IRtoMol/data/ir_data.pkl")
-#     # data = pd.read_pickle("/rds/projects/c/chenlv-ai-and-chemistry/wuwj/modified_ViT/30data.pkl")
-#     # vocab = build_vocab_from_iterator(formula_iterator(data['formula']))
-#     # print(vocab['C'])
-#     save_path = "/rds/projects/c/chenlv-ai-and-chemistry/wuwj/modified_ViT/utils/buildVocab"
-#     vocab_f = build_vocab(data['formula'], os.path.join(save_path, "vocab.formula"),mode='formula')
-#     torch.save(vocab_f, os.path.join(save_path, "vocab_formula.pt"))
-#     vocab_s = build_vocab(data['smiles'], os.path.join(save_path, "vocab.smiles"),mode='smiles')
-#     torch.save(vocab_s, os.path.join(save_path, "vocab_smiles.pt"))
     
 
 

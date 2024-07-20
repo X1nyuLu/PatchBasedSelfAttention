@@ -1,6 +1,4 @@
 import yaml
-# import sys
-# sys.path.append('/rds/projects/c/chenlv-ai-and-chemistry/wuwj/FinalResult')
 from train_process import TrainVal
 from model.spectra_process_layer import *
 import argparse
@@ -32,7 +30,6 @@ def main():
                     d_ff=config["d_ff"],
                     dropout=config["dropout"],
                     batchsize=config['batch_size'], 
-                    accum_iter=config['accum_iter'], 
                     num_epochs=config['num_epochs'], 
                     warmup=config['warmup_steps'], 
                     base_lr=config['base_lr'],

@@ -33,7 +33,6 @@ alpha:
 save_path: 
 batch_size: 128
 num_epochs: 200
-accum_iter: 1 #!!!
 base_lr: 1.0
 warmup_steps: 3000
 Resume: False

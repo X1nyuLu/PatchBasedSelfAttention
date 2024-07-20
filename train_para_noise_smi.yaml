@@ -37,7 +37,6 @@ split_testdata: False
 save_path: /rds/projects/c/chenlv-ai-and-chemistry/wuwj/FinalResult/2data_aug/sameTrainDataset/noise_smiles/train3
 batch_size: 256
 num_epochs: 200
-accum_iter: 1
 base_lr: 1.0
 warmup_steps: 3000
 Resume: False

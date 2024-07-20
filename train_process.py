@@ -59,7 +59,6 @@ class TrainState:
     """Track number of steps, examples, and tokens processed"""
     
     step: int = 0  # Steps in the current epoch
-    accum_step: int = 0  # Number of gradient accumulation steps
     samples: int = 0  # total # of examples used
     tokens: int = 0  # total # of tokens processed
     
@@ -70,7 +69,7 @@ class TrainVal:
                  vocab_smiles, 
                  spec_embed, spec_len=3200, spec_mask_len=400,
                  model=None, d_model=512, num_heads=8, layer_num=4, d_ff=2048, dropout=0.1,
-                 batchsize=128, accum_iter=10, num_epochs=200, warmup=3000, base_lr=1.0,
+                 batchsize=128, num_epochs=200, warmup=3000, base_lr=1.0, 
                  Resume=False, dataset_mode=None,
                  aug_mode=None, testset_aug=None, aug_num=0, smi_aug_num=0,
                  max_shift=None, theta=None, alpha=None,
@@ -120,7 +119,6 @@ class TrainVal:
         # Train Paras
         self.batch_size = batchsize
         self.num_epochs = num_epochs
-        self.accum_iter= accum_iter
         self.base_lr= base_lr
         self.warmup= warmup
         self.file_prefix= "EPOCH_"
@@ -150,8 +148,8 @@ class TrainVal:
         
         logger.info("spec_len: {} | spec_mask_len: {} | formula: {} | d_model: {} | num_heads:{} ".format(
                      spec_len, self.spec_mask_len, self.formula, self.d_model, self.num_heads))
-        logger.info("formula max pad: {} | tgt max pad: {} | batchsize: {}, accumulation iter: {} | epoch num: {}| base lr: {}| warmup stpes:{} | seed: {}".format(
-                    self.formula_max_padding, self.tgt_max_padding, self.batch_size, self.accum_iter,  self.num_epochs, self.base_lr, self.warmup, seed))
+        logger.info("formula max pad: {} | tgt max pad: {} | batchsize: {} | epoch num: {}| base lr: {}| warmup stpes:{} | seed: {}".format(
+                    self.formula_max_padding, self.tgt_max_padding, self.batch_size, self.num_epochs, self.base_lr, self.warmup, seed))
 
         # CONSTANTS
         self.bs_idx = 0
@@ -407,7 +405,6 @@ class TrainVal:
                                             optimizer,
                                             lr_scheduler,
                                             mode="train",
-                                            accum_iter=self.accum_iter,
                                             train_state=train_state,
                                             report_step=self.report_step)
             
@@ -457,7 +454,6 @@ class TrainVal:
                   optimizer,
                   scheduler,
                   mode="train",
-                  accum_iter=1,
                   train_state=TrainState(),
                   report_step=40,
                 ):
@@ -467,7 +463,6 @@ class TrainVal:
         total_tokens = 0
         total_loss = 0
         tokens = 0
-        n_accum = 0
 
         if self.formula: data_iter = (Batch_withFormula(
              self.device, b['formula'], b['spec'], b['smi'], spec_mask_len=self.spec_mask_len, pad=self.padding_idx) 
@@ -495,11 +490,8 @@ class TrainVal:
                 train_state.step += 1
                 train_state.samples += batch.tgt.shape[0]
                 train_state.tokens += batch.ntokens
-                if i % accum_iter == 0:
-                    optimizer.step()
-                    optimizer.zero_grad(set_to_none=True)
-                    n_accum += 1
-                    train_state.accum_step += 1
+                optimizer.step()
+                optimizer.zero_grad(set_to_none=True)
                 scheduler.step()
             elif mode == "eval": 
                 with torch.no_grad():
@@ -522,10 +514,10 @@ class TrainVal:
                 elapsed = time.time() - start
                 logger.info(
                     (
-                        "Epoch Step: %6d | Accumulation Step: %3d | Loss: %6.3e "
+                        "Epoch Step: %6d | Loss: %6.3e "
                         + "| Tokens / Sec: %7.1f | Learning Rate: %6.3e"
                     )
-                    % (i, n_accum, loss / batch.ntokens, tokens / elapsed, lr)
+                    % (i, loss / batch.ntokens, tokens / elapsed, lr)
                 )
                 self.writer.add_scalar("Train Loss",loss / batch.ntokens, i + epoch * len(self.train_dataloader))
                 start = time.time()

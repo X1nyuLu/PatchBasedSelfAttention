@@ -13,14 +13,14 @@ import pandas as pd
 
 import utils.the_annotated_transformer as atf
 from utils.DatasetDataLoader import generateDataset, CreateDataloader, set_random_seed
-from model.spectra_process_layer import *
+from utils.vocab import build_vocab
 
+from model.spectra_process_layer import *
 from model.formula_spec_model import make_model as make_model_withFormula
 from model.formula_spec_model import Batch as Batch_withFormula
 from model.spec_model import make_model as make_model_onlySpec
 from model.spec_model import Batch as Batch_onlySpec
 
-from buildVocab.vocab import build_vocab
 
 from torch.utils.tensorboard import SummaryWriter
 

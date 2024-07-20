@@ -1,10 +1,10 @@
-import yaml
 from translate_process import Translate_Transformer
 from model.spectra_process_layer import *
 from utils.score import main as score_main
-import os
 
 import argparse
+import yaml
+import os
 
 def main():
     parser = argparse.ArgumentParser(description='Translate script.')
@@ -18,18 +18,9 @@ def main():
     if config['spec_embed'] == 'EmbedPatchAttention':
         assert int(config['spec_mask_len']) == int(int(config['spec_len'])/int(config['patch_len'])), "`spec_mask_len` should be `spec_len` divided by `patch_len`."
         spec_embed = EmbedPatchAttention(spec_len=config['spec_len'], patch_len=config['patch_len'], d_model=config['d_model'], src_vocab=100)
-    # elif config['spec_embed'] == 'EPAFullToken':
-    #     assert int(config['spec_mask_len']) == int(int(config['spec_len'])/int(config['patch_len']))+1, "`spec_mask_len` should be (spec_len/patch_len) + 1."
-    #     spec_embed = EmbedPatchAttentionWithFullToken(spec_len=config['spec_len'], patch_len=config['patch_len'], d_model=config['d_model'], src_vocab=100)
-    # elif config['spec_embed'] == 'EPA3MoreTokens':
-    #     assert int(config['spec_mask_len']) == int(int(config['spec_len'])/int(config['patch_len']))+3, "`spec_mask_len` should be (spec_len/patch_len) + 3."
-    #     spec_embed = EmbedPatchAttentionWith3MoreTokens(spec_len=config['spec_len'], patch_len=config['patch_len'], d_model=config['d_model'], src_vocab=100)
-    # elif config['spec_embed'] == 'EPA400Tokens':
-    #     # assert int(config['spec_mask_len']) == int(int(config['spec_len'])/int(config['patch_len']))+400, "`spec_mask_len` should be (spec_len/patch_len) + 1."
-    #     spec_embed = EmbedPatchAttentionWith400Tokens(spec_len=config['spec_len'], patch_len=config['patch_len'], d_model=config['d_model'], src_vocab=100)                    
     elif config['spec_embed'] == 'DirectEmbed':
         spec_embed = SpecDirectEmbed(d_model=config['d_model'], src_vocab=100)
-    # """
+
     Translate = Translate_Transformer(test_data=config['test_data'], 
                                     save_path=config['save_path'],
                                     vocab_smiles=config['vocab_smiles'],
@@ -48,14 +39,11 @@ def main():
                                     smiles_max_padding=config['smiles_max_padding'],
                                     seed=config['seed'],
                                     )
-    Translate.translate_main(mode=config['translate_mode'], 
-                            beam_width=config['beam_width'], 
-                            n_best=config['n_best'], 
-                            testInf=config['testInf'])
-    # """
-    mode = config['translate_mode']
-    if mode == "G": filename = "GreedySearch_result.txt"
-    elif mode == "B": filename = "BeamSearch_BW{}_NB{}_result.txt".format(config['beam_width'], config['n_best'])
+    Translate.translate_main(beam_width=config['beam_width'], 
+                             n_best=config['n_best'], 
+                             testInf=config['testInf'])
+    
+    filename = "BeamSearch_BW{}_NB{}_result.txt".format(config['beam_width'], config['n_best'])
     save_path = config['save_path']
     score_main(inference_path=os.path.join(save_path, filename),
             tgt_path=os.path.join(save_path, 'tgt.txt'),

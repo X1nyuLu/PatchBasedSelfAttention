@@ -1,35 +1,17 @@
-import os
-from tqdm import tqdm
-import logging
-import time
-# import GPUtil
-
-
 import torch
 import torchtext
-# from torch.utils.data import DataLoader, TensorDataset
 import numpy as np
 
-# import sys
-# sys.path.append("/rds/projects/c/chenlv-ai-and-chemistry/wuwj/")
-# from utils.DatasetDataLoader import CreateDataloader
-# from modified_ViT.utils.DatasetDataLoader import generateDataset, CreateDataloader
-# from modified_ViT.utils.DatasetDataLoader import CreateDataloader
-from utils.DatasetDataLoader import generateDataset, CreateDataloader, set_random_seed
-
+from utils.DatasetDataLoader import CreateDataloader, set_random_seed
 from model.formula_spec_model import make_model as make_model_withFormula
 from model.formula_spec_model import Batch as Batch_withFormula
 from model.spec_model import make_model as make_model_onlySpec
 from model.spec_model import Batch as Batch_onlySpec
 
-
-# from modified_ViT.model.formula_spec_model import *
-
-# import Transformer_Code.utils.generateDataset as gd
-# import Transformer_Code.utils.createDataloader as dl
-
-# from AugmentData.train_formula_spec import Batch
+from tqdm import tqdm
+import logging
 import time
+import os
 
 
 def subsequent_mask(size):
@@ -74,6 +56,7 @@ class Translate_Transformer:
         self.tgt_max_padding = smiles_max_padding
         self.batch_size = batchsize
         set_random_seed(seed)
+        
         # Vocab
         if type(vocab_smiles) == str:
             assert os.path.exists(vocab_smiles), "vocab_smiles do not exist."
@@ -91,10 +74,6 @@ class Translate_Transformer:
                 assert isinstance(vocab_formula, torchtext.vocab.Vocab), "vocab_formula should be None or str or torchtext.vocab.Vocab."
                 self.formula_vocab = vocab_formula
 
-
-        # self.patch_size = patch_size
-        
-
         self.device = (
         "cuda"
         if torch.cuda.is_available()
@@ -107,7 +86,6 @@ class Translate_Transformer:
         self.bos_idx = self.tgt_vocab["<s>"]
         self.eos_idx = self.tgt_vocab["</s>"]
         self.unk_idx = self.tgt_vocab["<unk>"]
-        # print(self.padding_idx)
         
         logger.info("")
         logger.info("Loading test dataset...")
@@ -134,8 +112,7 @@ class Translate_Transformer:
             assert os.path.exists(model), "`model` do not exists."
             logger.info("Loading model: {}".format(model))
             assert spec_embed != None, "`spec_embed` is not set."
-            # self.model = make_model(spec_embed=spec_embed, formula_vocab=len(self.formula_vocab), tgt_vocab=len(self.tgt_vocab),
-            #                         d_model=d_model, h=num_heads)
+
             if formula:
                 self.model = make_model_withFormula(spec_embed=spec_embed, formula_vocab=len(self.formula_vocab), tgt_vocab=len(self.tgt_vocab),
                                                     d_model=d_model, h=num_heads, N=layer_num, d_ff=d_ff, dropout=dropout)
@@ -143,7 +120,6 @@ class Translate_Transformer:
                 self.model = make_model_onlySpec(tgt_vocab=len(self.tgt_vocab), src_embed=spec_embed,
                                                  d_model=d_model, h=num_heads, N=layer_num, d_ff=d_ff, dropout=dropout)
 
-            # self.model.load_state_dict(torch.load(model))
             if '.pt' in model:
                     self.model.load_state_dict(torch.load(model))
             elif '.tar' in model:
@@ -154,38 +130,6 @@ class Translate_Transformer:
             self.model = model
         self.model.to(self.device)
         self.model.eval()
-    
-    def greedy_decode(self, formula, spec):
-        batch_size = spec.size(0)
-        ys = torch.zeros(batch_size, 1).fill_(self.bos_idx).to(torch.long).to(self.device)
-        if self.formula:
-            batch = Batch_withFormula(self.device, formula, spec, ys, spec_mask_len=self.spec_mask_len, pad=self.padding_idx)
-        else:
-            batch = Batch_onlySpec(self.device, src=spec, tgt=ys, pad=self.padding_idx)
-
-        # batch = Batch(self.device, formula, spec, ys, pad=self.padding_idx, spec_mask_len=self.spec_mask_len)
-
-        with torch.no_grad():
-            # memory = self.model.encode(batch.formula, batch.spec, batch.src_mask)
-            if self.formula:
-                memory = self.model.encode(batch.formula, batch.spec, batch.src_mask)
-                
-            else:
-                memory = self.model.encode(batch.src)
-            
-            for i in range(self.tgt_max_padding - ys.shape[-1]):
-                if formula:
-                    out = self.model.decode(
-                        memory, ys, subsequent_mask(ys.size(1)).type_as(spec.data), batch.src_mask
-                    )
-                else: out = self.model.decode(memory, batch.tgt, batch.tgt_mask)
-                prob = self.model.generator(out[:, -1])
-                _, next_word = torch.max(prob, dim=1)
-                next_word = next_word.unsqueeze(-1)
-                ys = torch.cat([ys, next_word], dim=-1)
-
-        return ys
-    
     
         
     def beam_search_optimized(self, formula, spec, beam_width, n_best):
@@ -207,8 +151,6 @@ class Translate_Transformer:
                 memory = self.model.encode(batch.src)
                 out = self.model.decode(memory, ys, subsequent_mask(ys.size(1)).type_as(spec.data))
             
-            # print(out.shape)
-            # print(out)
             prob = self.model.generator(out[:, -1])
             vocab_size = prob.shape[-1]
             prob, next_chars = prob.topk(k=beam_width)
@@ -281,19 +223,13 @@ class Translate_Transformer:
             if mode == "G":
                 pred = self.greedy_decode(formula, spec)
             elif mode == "B":
-                # pred = self.beam_search(src, beam_width, n_best)
                 pred = self.beam_search_optimized(formula, spec, beam_width, n_best)
-                # pred = pred.view(-1, pred.size(-1))
             
             self.output_txtfile(pred,filename)
-            # print(batch["smi"])
             self.output_txtfile(batch["smi"], "tgt.txt")
-            # self.output_txtfile(batch["tgt"], "tgt.txt")
                 
             if testInf and i==9: break
             torch.cuda.empty_cache()
-            # del pred
-
 
     
     def output_txtfile(self, predictions, filename):
@@ -312,8 +248,4 @@ class Translate_Transformer:
                 line = " ".join(prediction)
                 line = line.split("</s>")[0] #remove </s>
                 file.write(line + "\n")
-                
-    
-    
-if __name__ == "__main__":
-    pass
+      

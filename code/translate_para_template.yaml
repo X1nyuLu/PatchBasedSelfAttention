@@ -1,0 +1,29 @@
+# `null` will be read as NoneType
+
+# Model Parameters
+model: null
+spec_embed: 'EmbedPatchAttention'
+spec_len: 3200
+patch_len: 8
+spec_mask_len: 400
+formula: True
+formula_max_padding: 15
+smiles_max_padding: 40
+d_model: 512
+num_heads: 8
+layer_num: 4
+d_ff: 2048
+dropout: 0.1
+
+# Data 
+test_data: 
+vocab_formula: 
+vocab_smiles: 
+
+# Translate Parameters
+save_path: 
+batch_size: 
+seed: 3234
+beam_width: 10
+n_best: 10
+testInf: False # If True, only run inference for 10 batches

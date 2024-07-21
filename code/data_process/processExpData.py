@@ -1,17 +1,13 @@
 import os
-import torch
 import pandas as pd
 import numpy as np
 from rdkit import Chem
 from rdkit.Chem import rdMolDescriptors
-
-import sys
-sys.path.append("/rds/projects/c/chenlv-ai-and-chemistry/wuwj/")
-# from modified_ViT.utils.buildVocab.vocab import split_formula, split_smiles
-from FinalResult.code.utils.DatasetDataLoader import split_formula, split_smiles
 from scipy import interpolate
 from jcamp import jcamp_readfile
 from tqdm import tqdm
+
+from utils.DatasetDataLoader import split_formula, split_smiles
 
 
 # Get Spectra from casID
@@ -147,11 +143,7 @@ def getBothData(sim_data, exp_valid_data, save_path):
             continue
         if not sim_smi[sim_smi==can_smi].empty:
             data = exp_valid_data[exp_valid_data['smiles'] == smi]
-            # print(data)
-            # print(data['formula'])
-            # print()
-            # print(exp_valid_data[exp_valid_data['smiles'] == smi])
-            # print(exp_valid_data[exp_valid_data['smiles'] == smi]['formula'].item())
+
             try:
                 both_data_info['smiles'].append(smi)
                 both_data_info['formula'].append(data['formula'].item())      
@@ -169,20 +161,3 @@ def getBothData(sim_data, exp_valid_data, save_path):
     # both_data_info.drop_duplicates()    
     both_data_info[['formula', 'smiles', 'casID']].to_csv(os.path.join(save_path, "bothExpData.csv"))
     both_data_info.to_pickle(os.path.join(save_path, "bothExpData.pkl")) # .pkl file contains sim and exp spectra data
-    
-if __name__ == "__main__":
-    # pass
-    raw_ir_data_dir = "/rds/projects/c/chenlv-ai-and-chemistry/wuwj/FinalResult/experimentalData/data/raw_ir"
-    exp_data_info_path = "/rds/projects/c/chenlv-ai-and-chemistry/wuwj/FinalResult/experimentalData/alldata.csv"
-    exp_data_info = pd.read_csv(exp_data_info_path, index_col=False)
-
-    formula_vocab = torch.load("/rds/projects/c/chenlv-ai-and-chemistry/wuwj/FinalResult/0directly_train/withFormula/ps8_bs128_EmbedPatchAttention/train1/vocab/vocab_formula.pt")
-    smi_vocab = torch.load("/rds/projects/c/chenlv-ai-and-chemistry/wuwj/FinalResult/0directly_train/withFormula/ps8_bs128_EmbedPatchAttention/train1/vocab/vocab_smiles.pt")
-
-    save_path = "/rds/projects/c/chenlv-ai-and-chemistry/wuwj/FinalResult/experimentalData/data/data_info"
-    
-    valid_data_info = getValidData(raw_ir_data_dir,exp_data_info, smi_vocab, formula_vocab, save_path)
-    # valid_data_info = pd.read_pickle("/rds/projects/c/chenlv-ai-and-chemistry/wuwj/FinalResult/experimentalData/data/data_info/validExpData.pkl")
-    sim_data = pd.read_pickle("/rds/projects/c/chenlv-ai-and-chemistry/wuwj/IRtoMol/data/ir_data.pkl")
-    print(valid_data_info)
-    getBothData(sim_data, valid_data_info, save_path)

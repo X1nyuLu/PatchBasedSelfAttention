@@ -44,20 +44,24 @@ conda activate patchAttention
 
 ### Training
 ```
+cd code
 python -m train_main --para train_para.yaml
 ```
 
 ### Inference
 ```
+cd code
 python -m inference_main --para inference_para.yaml
 ```
 **Ensemble methods**
 
 ```
+cd code
 python -m ensemble.avg_inference_main --para ensemble/multiple_models_inference_para.yaml
 ```
 or
 ```
+cd code
 python -m ensemble.Ensemble_decode_main --para ensemble/multiple_models_inference_para.yaml
 ```
 ### Checkpoints

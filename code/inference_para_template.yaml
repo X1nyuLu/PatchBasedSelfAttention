@@ -1,5 +1,3 @@
-# `null` will be read as NoneType
-
 # Model Parameters
 model: null
 spec_embed: 'EmbedPatchAttention'

@@ -136,7 +136,6 @@ class TrainVal:
         if torch.backends.mps.is_available()
         else "cpu"
         )
-        # print(torch.cuda.is_available(), self.device)
         
         set_random_seed(seed)
         
@@ -299,10 +298,6 @@ class TrainVal:
                                         smi_aug_num=smi_aug_num, dataset_mode=dataset_mode)
                                         # smiles_max_pad=self.tgt_max_padding, formula_max_pad=self.formula_max_padding)
             torch.save(train_set, os.path.join(data_path, 'train_set.pt'))
-            
-            # val_set = generateDataset(val_set, smiles_vocab=self.tgt_vocab, spec_len=spec_len, formula=formula, formula_vocab=self.formula_vocab, 
-            #                           aug_mode=aug_mode, aug_num=aug_num, max_shift=max_shift, theta=theta, alpha=alpha,
-            #                           smi_aug_num=smi_aug_num, dataset_mode=dataset_mode)
 
             val_set = generateDataset(val_set, smiles_vocab=self.tgt_vocab, spec_len=spec_len, formula=formula, formula_vocab=self.formula_vocab, 
                                                 aug_mode=None, dataset_mode=dataset_mode)

@@ -9,9 +9,7 @@ def clones(module, N):
     return nn.ModuleList([copy.deepcopy(module) for _ in range(N)])
 
 class FormulaSpecEmbed(nn.Module):
-    def __init__(self, formula_vocab, spec_embed, d_model=512,
-                #  spec_len=3200, patch_len=8, spec_vocab=100,
-                 ):
+    def __init__(self, formula_vocab, spec_embed, d_model=512):
         super(FormulaSpecEmbed, self).__init__()
 
         self.formula_embed = atf.Embeddings(d_model=d_model, vocab=formula_vocab)

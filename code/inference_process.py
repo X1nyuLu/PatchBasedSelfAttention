@@ -201,29 +201,20 @@ class Translate_Transformer:
             
             return out.reshape(-1,out.shape[-1])
         
-    def translate_main(self, mode="G", beam_width=None, n_best=None, testInf=False):
-        """
-        Para:
-            mode: "G" or "B" 
-                - "G": Greedy Search
-                - "B": Beam Search
-        """
+    def translate_main(self, beam_width=None, n_best=None, testInf=False):
+        
         logger = logging.getLogger("Translate")
-        if mode == "G": filename = "GreedySearch_result.txt"
-        elif mode == "B": filename = "BeamSearch_BW{}_NB{}_result.txt".format(beam_width, n_best)
+        
+        filename = "BeamSearch_BW{}_NB{}_result.txt".format(beam_width, n_best)
 
-        logger.info("mode: {} | beam_width: {} | n_best: {}".format(mode, beam_width, n_best))
+        logger.info("beam_width: {} | n_best: {}".format(beam_width, n_best))
         for i, batch in tqdm(enumerate(self.dataloader), desc="Batch"):
             spec = batch["spec"].to(self.device)
             if self.formula:
                 formula = batch["formula"].to(self.device)
             else: formula = None
             
-
-            if mode == "G":
-                pred = self.greedy_decode(formula, spec)
-            elif mode == "B":
-                pred = self.beam_search_optimized(formula, spec, beam_width, n_best)
+            pred = self.beam_search_optimized(formula, spec, beam_width, n_best)
             
             self.output_txtfile(pred,filename)
             self.output_txtfile(batch["smi"], "tgt.txt")

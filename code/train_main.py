@@ -7,10 +7,9 @@ def main():
     parser = argparse.ArgumentParser(description='Training script.')
     parser.add_argument('--para', type=str, help='.yaml file of training parameters')
     args = parser.parse_args()
-    with open(args.train_para, 'r') as f:
+    with open(args.para, 'r') as f:
         config = yaml.safe_load(f)
 
-    print('spec method: ',config['spec_embed'])
     if config['spec_embed'] == 'EmbedPatchAttention':
         assert int(config['spec_mask_len']) == int(int(config['spec_len'])/int(config['patch_len'])), "`spec_mask_len` should be `spec_len` divided by `patch_len`."
         spec_embed = EmbedPatchAttention(spec_len=config['spec_len'], patch_len=config['patch_len'], d_model=config['d_model'], src_vocab=100)
@@ -34,7 +33,7 @@ def main():
                     warmup=config['warmup_steps'], 
                     base_lr=config['base_lr'],
                     Resume=config['Resume'],
-                    dataset_mode=config['dataset_mode'],
+                    # dataset_mode=config['dataset_mode'],
                     aug_mode=config['aug_mode'], 
                     testset_aug=config['testset_aug'],
                     aug_num=config['aug_num'], 

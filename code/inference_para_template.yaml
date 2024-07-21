@@ -1,9 +1,9 @@
 # Model Parameters
-model: null
+model: 
 spec_embed: 'EmbedPatchAttention'
 spec_len: 3200
-patch_len: 8
-spec_mask_len: 400
+patch_len: 64
+spec_mask_len: 50
 formula: True
 formula_max_padding: 15
 smiles_max_padding: 40
@@ -20,7 +20,7 @@ vocab_smiles:
 
 # Translate Parameters
 save_path: 
-batch_size: 
+batch_size: 512
 seed: 3234
 beam_width: 10
 n_best: 10

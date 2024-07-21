@@ -1,12 +1,14 @@
 # Model Parameters
-model: null
+model: 
+Resume: False
+
 spec_embed: 'EmbedPatchAttention'
 spec_len: 3200
-patch_len: 8
-spec_mask_len: 400
+patch_len: 64
+spec_mask_len: 50
 formula: True
 formula_max_padding: 15
-smiles_max_padding: 40
+smiles_max_padding: 60
 d_model: 512
 num_heads: 8
 layer_num: 4
@@ -18,21 +20,22 @@ data:
 vocab_formula: 
 vocab_smiles: 
 split_testdata: True
-aug_mode: null # Data Augmentation
-testset_aug: null # Data Augmentation of test set
-aug_num: 
-smi_aug_num: 
+aug_mode:  # Data Augmentation
+- verticalNoise
+- SMILES
+testset_aug:  # Data Augmentation of test set
+aug_num: 2
+smi_aug_num: 1
 max_shift: 
-theta: 
-alpha: 
+theta: 0.1
+alpha: 5
 
 # Train Parameters
 save_path: 
 batch_size: 128
-num_epochs: 200
+num_epochs: 2
 base_lr: 1.0
 warmup_steps: 3000
-Resume: False
 test_train: False
 seed: 3234
 

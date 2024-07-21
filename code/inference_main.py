@@ -10,7 +10,7 @@ def main():
     parser = argparse.ArgumentParser(description='Translate script.')
     parser.add_argument('--para', type=str, help='.yaml file of training parameters')
     args = parser.parse_args()
-    with open(args.translate_para, 'r') as f:
+    with open(args.para, 'r') as f:
         config = yaml.safe_load(f)
 
 

@@ -23,7 +23,13 @@ python == 3.9.18
 torch==2.0.1+cu118
 torchtext==0.15.2
 rdkit==2022.9.1
+pandas=1.4.2
+jcamp==1.2.2
+scipy=1.7.3
 tqdm==4.64.0
+tensorboard==2.14.1
+gputil==1.4.0
+altair==5.1.2
 ```
 **Install via Conda**
 ```

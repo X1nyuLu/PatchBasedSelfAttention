@@ -26,7 +26,8 @@ rdkit==2022.9.1
 pandas=1.4.2
 jcamp==1.2.2
 scipy=1.7.3
-tqdm==4.64.0
+tqdm==4.66.4
+pyyaml=6.0.1
 tensorboard==2.14.1
 gputil==1.4.0
 altair==5.1.2
@@ -36,7 +37,7 @@ altair==5.1.2
 # clone the environment
 conda env create -f environment.yaml
 # activate the environment
-conda activate gtmgc
+conda activate patchAttention
 ```
 
 

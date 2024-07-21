@@ -100,7 +100,6 @@ def getValidData(raw_ir_dir, exp_data_info, smi_vocab, formula_vocab, save_path)
                 posWithinX = np.where( (newx >= x[0]) & (newx <= x[-1]) )
                 newy[posWithinX]= func(newx[posWithinX])
             except ValueError:
-                
                 continue
                 
             formula.append(f)

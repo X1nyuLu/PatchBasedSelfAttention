@@ -20,7 +20,6 @@ class LabelSmoothing(nn.Module):
 
     def __init__(self, criterion, size, padding_idx, smoothing=0.0):
         super(LabelSmoothing, self).__init__()
-        # self.criterion = nn.KLDivLoss(reduction="sum")
         self.criterion = criterion
         self.padding_idx = padding_idx
         self.confidence = 1.0 - smoothing
@@ -85,7 +84,7 @@ class TrainVal:
                 `None`: build a new model
                 ``str: path to model.pt / .tar
                 `nn.Module` instance
-            aug_mode: None or 'verticalNoise' or 'horizontalShift' or 'horizontalShiftNonFP'
+            aug_mode: None or 'verticalNoise' or 'horizontalShift' or 'SMILES or List
         """
         logging.basicConfig(level=logging.INFO,handlers=[logging.FileHandler(os.path.join(save_path,"train.log"))])
         logger = logging.getLogger("INIT")

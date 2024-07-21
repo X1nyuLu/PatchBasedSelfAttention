@@ -81,7 +81,7 @@ class generateDataset(Dataset):
             contains smiles, formula and spectra of interested molecules
         smiles_vocab: torchtext.vocab.Vocab()
         formula_vocab: None or torchtext.vocab.Vocab()
-        aug_mode: None or 'verticalNoise' or 'horizontalShift' or 'horizontalShiftNonFP' or 'SMILES'
+        aug_mode: None or 'verticalNoise' or 'horizontalShift' or 'SMILES'
         
         """
 

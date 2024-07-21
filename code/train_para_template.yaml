@@ -16,7 +16,7 @@ d_ff: 2048
 dropout: 0.1
 
 # Data 
-data: /rds/projects/c/chenlv-ai-and-chemistry/wuwj/FinalResult/experimentalData/data6_ibmvocab_smiMax50/main/trainSet.pkl
+data: 
 vocab_formula: 
 vocab_smiles: 
 split_testdata: True
@@ -31,7 +31,7 @@ theta: 0.1
 alpha: 5
 
 # Train Parameters
-save_path: /rds/projects/c/chenlv-ai-and-chemistry/wuwj/spec_2_smi/check_final_code/check_result/train
+save_path: 
 batch_size: 128
 num_epochs: 2
 base_lr: 1.0

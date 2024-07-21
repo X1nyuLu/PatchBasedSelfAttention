@@ -1,5 +1,5 @@
 # Model Parameters
-model: /rds/projects/c/chenlv-ai-and-chemistry/wuwj/spec_2_smi/check_final_code/check_result/train/model/best_model_optimizer_params.tar
+model: 
 spec_embed: 'EmbedPatchAttention'
 spec_len: 3200
 patch_len: 64
@@ -14,12 +14,12 @@ d_ff: 2048
 dropout: 0.1
 
 # Data 
-test_data: /rds/projects/c/chenlv-ai-and-chemistry/wuwj/spec_2_smi/check_final_code/check_result/train/data/test_set.pt
-vocab_formula: /rds/projects/c/chenlv-ai-and-chemistry/wuwj/spec_2_smi/check_final_code/check_result/train/vocab/vocab_formula.pt
-vocab_smiles: /rds/projects/c/chenlv-ai-and-chemistry/wuwj/spec_2_smi/check_final_code/check_result/train/vocab/vocab_smiles.pt
+test_data: 
+vocab_formula: 
+vocab_smiles: 
 
 # Translate Parameters
-save_path: /rds/projects/c/chenlv-ai-and-chemistry/wuwj/spec_2_smi/check_final_code/check_result/inf
+save_path: 
 batch_size: 512
 seed: 3234
 beam_width: 10

@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-from ..utils import Embeddings, MultiHeadedAttention
+from utils import Embeddings, MultiHeadedAttention
 
 class SpecDirectEmbed(nn.Module):
     def __init__(self, d_model=512, src_vocab=100) -> None:

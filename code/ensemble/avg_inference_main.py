@@ -3,9 +3,9 @@ import yaml
 import argparse
 import torch
 
-from ..inference_process import Translate_Transformer
-from ..utils import score_main
-from ..model import EmbedPatchAttention, make_model_withFormula, make_model_onlySpec
+from utils import score_main
+from model import EmbedPatchAttention, make_model_withFormula, make_model_onlySpec
+from inference import Translate_Transformer
 
 
 

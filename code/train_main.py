@@ -1,8 +1,8 @@
 import yaml
 import argparse
 
-from train_process import TrainVal
-from .model import EmbedPatchAttention, SpecDirectEmbed
+from train import TrainVal
+from model import EmbedPatchAttention, SpecDirectEmbed
 
 def main():
     parser = argparse.ArgumentParser(description='Training script.')

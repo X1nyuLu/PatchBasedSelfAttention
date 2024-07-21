@@ -9,9 +9,9 @@ import torchtext
 import pandas as pd
 
 
-from .utils import rate, SimpleLossCompute, DummyOptimizer, DummyScheduler
-from .utils import generateDataset, CreateDataloader, set_random_seed, build_vocab
-from .model import make_model_onlySpec, make_model_withFormula, Batch_onlySpec, Batch_withFormula
+from utils import rate, SimpleLossCompute, DummyOptimizer, DummyScheduler
+from utils import generateDataset, CreateDataloader, set_random_seed, build_vocab
+from model import make_model_onlySpec, make_model_withFormula, Batch_onlySpec, Batch_withFormula
 
 from torch.utils.tensorboard import SummaryWriter
 

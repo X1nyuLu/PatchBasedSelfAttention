@@ -44,12 +44,21 @@ conda activate patchAttention
 
 ### Training
 ```
-python ./code/train_main.py --para train_para.yaml
+python -m train_main --para train_para.yaml
 ```
 
 ### Inference
 ```
-python ./code/inference_main.py --para inference_para.yaml
+python -m inference_main --para inference_para.yaml
+```
+**Ensemble methods**
+
+```
+python -m ensemble.avg_inference_main --para ensemble/multiple_models_inference_para.yaml
+```
+or
+```
+python -m ensemble.Ensemble_decode_main --para ensemble/multiple_models_inference_para.yaml
 ```
 ### Checkpoints
 Model checkpoints for three datasets can be found at 

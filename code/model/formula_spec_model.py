@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import copy
 
-from ..utils import (
+from utils import (
     Embeddings, 
     MultiHeadedAttention,
     PositionalEncoding,

@@ -1,5 +1,5 @@
 # import utils.the_annotated_transformer as atf
-from ..utils import (
+from utils import (
     MultiHeadedAttention,
     PositionwiseFeedForward,
     PositionalEncoding,

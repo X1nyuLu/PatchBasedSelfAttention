@@ -12,10 +12,11 @@ import argparse
 import yaml
 import os
 
-from Ensemble_decode_process import Translate_Transformer
-from ..model import EmbedPatchAttention, make_model_onlySpec, make_model_withFormula
-from ..utils import score_main
-import utils.the_annotated_transformer as atf
+# from Ensemble_decode_process import Translate_Transformer
+from inference import Ensemble_Translate_Transformer
+from model import EmbedPatchAttention, make_model_onlySpec, make_model_withFormula
+from utils import score_main, PositionalEncoding
+# import utils.the_annotated_transformer as atf
 
 
 class EnsembleDecoderOutput(object):
@@ -41,7 +42,7 @@ class EnsembleEncoder(nn.Module):
         super(EnsembleEncoder, self).__init__()
         self.model_encoders = nn.ModuleList(model_encoders)
         self.src_embeds = nn.ModuleList(src_embeds)
-        self.src_position = atf.PositionalEncoding(d_model=512, dropout=0.1)
+        self.src_position = PositionalEncoding(d_model=512, dropout=0.1)
 
     def forward(self, formula, spec, src_mask):
         enc_out = [model_encoder(self.src_position(src_embed(formula, spec)),src_mask) for model_encoder,src_embed in zip(self.model_encoders, self.src_embeds)]
@@ -154,24 +155,24 @@ def main():
     ensemble_model = EnsembleModel(models)#, opt.avg_raw_probs)
 
 
-    Translate = Translate_Transformer(test_data=config['test_data'], 
-                                      save_path=config['save_path'],
-                                      vocab_smiles=config['vocab_smiles'],
-                                      spec_embed=None, #spec_embed,
-                                      spec_mask_len=config['spec_mask_len'],
-                                      model=ensemble_model, 
-                                      d_model=config['d_model'], 
-                                      num_heads=config['num_heads'],
-                                      layer_num=config["layer_num"],
-                                      d_ff=config["d_ff"],
-                                      dropout=config["dropout"],
-                                      batchsize=config['batch_size'], 
-                                      formula=config['formula'], 
-                                      vocab_formula=config['vocab_formula'], 
-                                      formula_max_padding=config['formula_max_padding'],
-                                      smiles_max_padding=config['smiles_max_padding'],
-                                      seed=config['seed'],
-                                      )
+    Translate = Ensemble_Translate_Transformer(test_data=config['test_data'], 
+                                               save_path=config['save_path'],
+                                               vocab_smiles=config['vocab_smiles'],
+                                               spec_embed=None, #spec_embed,
+                                               spec_mask_len=config['spec_mask_len'],
+                                               model=ensemble_model, 
+                                               d_model=config['d_model'], 
+                                               num_heads=config['num_heads'],
+                                               layer_num=config["layer_num"],
+                                               d_ff=config["d_ff"],
+                                               dropout=config["dropout"],
+                                               batchsize=config['batch_size'], 
+                                               formula=config['formula'], 
+                                               vocab_formula=config['vocab_formula'], 
+                                               formula_max_padding=config['formula_max_padding'],
+                                               smiles_max_padding=config['smiles_max_padding'],
+                                               seed=config['seed'],
+                                               )
     
     Translate.translate_main(beam_width=config['beam_width'], 
                              n_best=config['n_best'], 

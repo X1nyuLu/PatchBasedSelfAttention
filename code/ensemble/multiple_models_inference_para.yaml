@@ -4,9 +4,12 @@
 formula: True
 formula_max_padding: 15
 models: 
-- /path/to/model_1
-- /path/to/model_2
-- /path/to/model_3
+- /rds/projects/c/chenlv-ai-and-chemistry/wuwj/spec_2_smi/check_final_code/check_result/train/model/best_model_optimizer_params.tar
+- /rds/projects/c/chenlv-ai-and-chemistry/wuwj/spec_2_smi/check_final_code/check_result/train/model/EPOCH_00.pt
+- /rds/projects/c/chenlv-ai-and-chemistry/wuwj/spec_2_smi/check_final_code/check_result/train/model/EPOCH_final.pt
+# - /path/to/model_1
+# - /path/to/model_2
+# - /path/to/model_3
 
 
 spec_embed: 'EmbedPatchAttention'
@@ -21,12 +24,12 @@ d_ff: 2048
 dropout: 0.1
 
 # Data 
-test_data: 
-vocab_formula: 
-vocab_smiles: 
+test_data: /rds/projects/c/chenlv-ai-and-chemistry/wuwj/spec_2_smi/check_final_code/check_result/train/data/test_set.pt
+vocab_formula: /rds/projects/c/chenlv-ai-and-chemistry/wuwj/spec_2_smi/check_final_code/check_result/train/vocab/vocab_formula.pt
+vocab_smiles: /rds/projects/c/chenlv-ai-and-chemistry/wuwj/spec_2_smi/check_final_code/check_result/train/vocab/vocab_smiles.pt
 
 # Translate Parameters
-save_path: 
+save_path: /rds/projects/c/chenlv-ai-and-chemistry/wuwj/spec_2_smi/check_final_code/check_result/inf
 batch_size: 512
 seed: 3234
 beam_width: 10

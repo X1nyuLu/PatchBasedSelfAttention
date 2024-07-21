@@ -15,7 +15,7 @@ from typing import List, Optional, Tuple
 from scipy import interpolate
 from tqdm import tqdm
 
-from utils.SmilesEnumerator import SmilesEnumerator
+from .SmilesEnumerator import SmilesEnumerator
 
 
 def split_smiles(smile: str) -> list:

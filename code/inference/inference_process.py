@@ -1,13 +1,14 @@
-import os
-from tqdm import tqdm
-import logging
-import time
 import torch
 import torchtext
 import numpy as np
+from tqdm import tqdm
+import logging
+import time
+import os
 
-from ..utils import CreateDataloader, set_random_seed
-from ..model import make_model_withFormula, Batch_withFormula, make_model_onlySpec, Batch_onlySpec
+from utils import set_random_seed, CreateDataloader
+from model import make_model_onlySpec, make_model_withFormula, Batch_onlySpec, Batch_withFormula
+
 
 
 def subsequent_mask(size):
@@ -52,6 +53,7 @@ class Translate_Transformer:
         self.tgt_max_padding = smiles_max_padding
         self.batch_size = batchsize
         set_random_seed(seed)
+        
         # Vocab
         if type(vocab_smiles) == str:
             assert os.path.exists(vocab_smiles), "vocab_smiles do not exist."
@@ -146,7 +148,7 @@ class Translate_Transformer:
                 memory = self.model.encode(batch.src)
                 out = self.model.decode(memory, ys, subsequent_mask(ys.size(1)).type_as(spec.data))
             
-            prob = self.model.generator(out)[:, -1]
+            prob = self.model.generator(out[:, -1])
             vocab_size = prob.shape[-1]
             prob, next_chars = prob.topk(k=beam_width)
 
@@ -169,8 +171,7 @@ class Translate_Transformer:
                             memory, ys_new, subsequent_mask(ys_new.size(1)).type_as(spec.data)
                         )   
 
-                    next_prob = self.model.generator(out)[:, -1]
-
+                    next_prob = self.model.generator(out[:, -1])
                     prob = prob_.repeat(1, vocab_size) + next_prob
                     prob, next_chars = prob.topk(k=beam_width)
 
@@ -210,7 +211,6 @@ class Translate_Transformer:
                 formula = batch["formula"].to(self.device)
             else: formula = None
             
-
             pred = self.beam_search_optimized(formula, spec, beam_width, n_best)
             
             self.output_txtfile(pred,filename)
@@ -218,7 +218,6 @@ class Translate_Transformer:
                 
             if testInf and i==9: break
             torch.cuda.empty_cache()
-
 
     
     def output_txtfile(self, predictions, filename):
@@ -237,8 +236,4 @@ class Translate_Transformer:
                 line = " ".join(prediction)
                 line = line.split("</s>")[0] #remove </s>
                 file.write(line + "\n")
-                
-    
-    
-if __name__ == "__main__":
-    pass
+      

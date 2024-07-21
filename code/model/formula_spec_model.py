@@ -1,8 +1,19 @@
 import torch
 import torch.nn as nn
-
-import utils.the_annotated_transformer as atf
 import copy
+
+from ..utils import (
+    Embeddings, 
+    MultiHeadedAttention,
+    PositionalEncoding,
+    PositionwiseFeedForward,
+    Encoder,
+    EncoderLayer,
+    Decoder,
+    DecoderLayer,
+    Generator,
+    subsequent_mask
+)
 
 def clones(module, N):
     "Produce N identical layers."
@@ -12,7 +23,7 @@ class FormulaSpecEmbed(nn.Module):
     def __init__(self, formula_vocab, spec_embed, d_model=512):
         super(FormulaSpecEmbed, self).__init__()
 
-        self.formula_embed = atf.Embeddings(d_model=d_model, vocab=formula_vocab)
+        self.formula_embed = Embeddings(d_model=d_model, vocab=formula_vocab)
         self.spec_embed = spec_embed
 
     def forward(self, formula, spec):
@@ -27,16 +38,16 @@ def make_model(
 ):
     
     c = copy.deepcopy
-    attn = atf.MultiHeadedAttention(h, d_model)
-    ff = atf.PositionwiseFeedForward(d_model, d_ff, dropout)
-    position = atf.PositionalEncoding(d_model, dropout)
+    attn = MultiHeadedAttention(h, d_model)
+    ff = PositionwiseFeedForward(d_model, d_ff, dropout)
+    position = PositionalEncoding(d_model, dropout)
     src_embed = FormulaSpecEmbed(formula_vocab, spec_embed, d_model)
     model = EncoderDecoder(
-        atf.Encoder(atf.EncoderLayer(d_model, c(attn), c(ff), dropout), N),
-        atf.Decoder(atf.DecoderLayer(d_model, c(attn), c(attn), c(ff), dropout), N),
+        Encoder(EncoderLayer(d_model, c(attn), c(ff), dropout), N),
+        Decoder(DecoderLayer(d_model, c(attn), c(attn), c(ff), dropout), N),
         src_embed,
-        nn.Sequential(atf.Embeddings(d_model, tgt_vocab), c(position)),
-        atf.Generator(d_model, tgt_vocab),
+        nn.Sequential(Embeddings(d_model, tgt_vocab), c(position)),
+        Generator(d_model, tgt_vocab),
     )
 
     for p in model.parameters():
@@ -58,7 +69,7 @@ class EncoderDecoder(nn.Module):
         self.decoder = decoder
         self.generator = generator
 
-        self.src_position = atf.PositionalEncoding(d_model=512, dropout=0.1)
+        self.src_position = PositionalEncoding(d_model=512, dropout=0.1)
 
     def forward(self, formula, spec, src_mask, tgt, tgt_mask):
         """
@@ -99,7 +110,7 @@ class Batch:
     def make_std_mask(tgt, pad):
         "Create a mask to hide padding and future words."
         tgt_mask = (tgt != pad).unsqueeze(-2)
-        tgt_mask = tgt_mask & atf.subsequent_mask(tgt.size(-1)).type_as(
+        tgt_mask = tgt_mask & subsequent_mask(tgt.size(-1)).type_as(
             tgt_mask.data
         )
         return tgt_mask 

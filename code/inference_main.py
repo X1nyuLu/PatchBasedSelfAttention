@@ -1,10 +1,10 @@
-from inference_process import Translate_Transformer
-from model.spectra_process_layer import *
-from utils.score import main as score_main
-
 import argparse
 import yaml
 import os
+
+from inference_process import Translate_Transformer
+from .model import EmbedPatchAttention, SpecDirectEmbed
+from .utils import score_main
 
 def main():
     parser = argparse.ArgumentParser(description='Translate script.')

@@ -1,17 +1,14 @@
 import torch
 import torchtext
 import numpy as np
-
-from utils.DatasetDataLoader import CreateDataloader, set_random_seed
-from model.formula_spec_model import make_model as make_model_withFormula
-from model.formula_spec_model import Batch as Batch_withFormula
-from model.spec_model import make_model as make_model_onlySpec
-from model.spec_model import Batch as Batch_onlySpec
-
 from tqdm import tqdm
 import logging
 import time
 import os
+
+from .utils import set_random_seed, CreateDataloader
+from .model import make_model_onlySpec, make_model_withFormula, Batch_onlySpec, Batch_withFormula
+
 
 
 def subsequent_mask(size):

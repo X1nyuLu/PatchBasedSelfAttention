@@ -7,7 +7,7 @@ from scipy import interpolate
 from jcamp import jcamp_readfile
 from tqdm import tqdm
 
-from utils.DatasetDataLoader import split_formula, split_smiles
+from ..utils import split_smiles, split_formula
 
 
 # Get Spectra from casID

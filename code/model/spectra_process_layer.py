@@ -1,13 +1,13 @@
 import torch
 import torch.nn as nn
 
-import utils.the_annotated_transformer as atf
+from ..utils import Embeddings, MultiHeadedAttention
 
 class SpecDirectEmbed(nn.Module):
     def __init__(self, d_model=512, src_vocab=100) -> None:
         super(SpecDirectEmbed, self).__init__()
         self.d_model = d_model
-        self.embed = atf.Embeddings(d_model, src_vocab)
+        self.embed = Embeddings(d_model, src_vocab)
     def forward(self, spec):
         return self.embed(spec.to(torch.int)).squeeze(1) #[batch_size, spec_len, d_model]       
 
@@ -17,9 +17,9 @@ class EmbedPatchAttention(nn.Module):
         assert spec_len%patch_len == 0, "Patch length {} doesn't match spectra length {}".format(patch_len, spec_len)
         self.patch_len = patch_len
         self.d_model = d_model
-        self.embed = atf.Embeddings(d_model, src_vocab)
+        self.embed = Embeddings(d_model, src_vocab)
         self.patch = nn.Linear(patch_len*d_model, d_model)
-        self.attention = atf.MultiHeadedAttention(h=8, d_model=512)
+        self.attention = MultiHeadedAttention(h=8, d_model=512)
         
     def forward(self, spec): #[batch_size, spec_len]
         batch_size = spec.shape[0]

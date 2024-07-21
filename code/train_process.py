@@ -6,21 +6,12 @@ import torch
 import torch.nn as nn
 from torch.optim.lr_scheduler import LambdaLR
 import torchtext
-
-import time
 import pandas as pd
 
 
-import utils.the_annotated_transformer as atf
-from utils.DatasetDataLoader import generateDataset, CreateDataloader, set_random_seed
-from utils.vocab import build_vocab
-
-from model.spectra_process_layer import *
-from model.formula_spec_model import make_model as make_model_withFormula
-from model.formula_spec_model import Batch as Batch_withFormula
-from model.spec_model import make_model as make_model_onlySpec
-from model.spec_model import Batch as Batch_onlySpec
-
+from .utils import rate, SimpleLossCompute, DummyOptimizer, DummyScheduler
+from .utils import generateDataset, CreateDataloader, set_random_seed, build_vocab
+from .model import make_model_onlySpec, make_model_withFormula, Batch_onlySpec, Batch_withFormula
 
 from torch.utils.tensorboard import SummaryWriter
 
@@ -212,7 +203,7 @@ class TrainVal:
             self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
             self.lr_scheduler = LambdaLR(
                 optimizer=self.optimizer,
-                lr_lambda=lambda step: atf.rate(
+                lr_lambda=lambda step: rate(
                     step, self.d_model, factor=1, warmup=self.warmup
                 ),
             )
@@ -371,7 +362,7 @@ class TrainVal:
             )
             lr_scheduler = LambdaLR(
                 optimizer=optimizer,
-                lr_lambda=lambda step: atf.rate(
+                lr_lambda=lambda step: rate(
                     step, self.d_model, factor=1, warmup=self.warmup
                 ),
             )
@@ -390,7 +381,7 @@ class TrainVal:
             model.train()
             _, train_state = self.run_epoch(epoch, self.train_dataloader,
                                             model,
-                                            atf.SimpleLossCompute(model.generator, criterion),
+                                            SimpleLossCompute(model.generator, criterion),
                                             optimizer,
                                             lr_scheduler,
                                             mode="train",
@@ -407,9 +398,9 @@ class TrainVal:
             model.eval()
             val_loss, _ = self.run_epoch(epoch, self.valid_dataloader,
                                          model,
-                                         atf.SimpleLossCompute(model.generator, criterion),
-                                         atf.DummyOptimizer(),
-                                         atf.DummyScheduler(),
+                                         SimpleLossCompute(model.generator, criterion),
+                                         DummyOptimizer(),
+                                         DummyScheduler(),
                                          mode="eval",
                                          report_step=self.report_step)
             self.writer.add_scalar("Val Loss", val_loss, epoch)

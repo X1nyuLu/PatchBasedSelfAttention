@@ -31,6 +31,7 @@ pyyaml=6.0.1
 tensorboard==2.14.1
 gputil==1.4.0
 altair==5.1.2
+scikit-learn==0.24.2
 ```
 **Install via Conda**
 ```

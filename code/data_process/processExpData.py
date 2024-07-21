@@ -22,8 +22,6 @@ def readjdx(jdxfile):
     x = jcampdict['x']
     y = jcampdict['y']
 
-    # assert x.shape==y.shape, "shape of x {} and y {} are not equal".format(x.shape, y.shape) 
-
     return x,y,xunit,yunit
 
 def getValidData(raw_ir_dir, exp_data_info, smi_vocab, formula_vocab, save_path):
@@ -32,7 +30,6 @@ def getValidData(raw_ir_dir, exp_data_info, smi_vocab, formula_vocab, save_path)
         - both tokens of molecular smiles and formula are in the corresponding vocab.
         - x unit: wavenumbers, y unit: absorbance
     """
-    # irInVocab = pd.DataFrame()
 
     formula = []
     smiles = []
@@ -66,12 +63,10 @@ def getValidData(raw_ir_dir, exp_data_info, smi_vocab, formula_vocab, save_path)
             for token in smi_:
                 if token not in smi_vocab:
                     skip_row = True
-                    # print("smi: ", row["SMILES"], token)
                     break
             for token in formula_:
                 if token not in formula_vocab:
                     skip_row = True
-                    # print("formula: ", f, token)
                     break
             if skip_row: continue
 
@@ -85,7 +80,6 @@ def getValidData(raw_ir_dir, exp_data_info, smi_vocab, formula_vocab, save_path)
             elif xunit == 'MICROMETERS':
                 x = 1 / (x * 1e-4)
             else: 
-                print('xunit: ', xunit)
                 continue
 
             if yunit == 'TRANSMITTANCE':
@@ -93,7 +87,6 @@ def getValidData(raw_ir_dir, exp_data_info, smi_vocab, formula_vocab, save_path)
             elif yunit in ['ABSORBANCE', "absorption index"]:
                 pass
             else: 
-                print("yunit: ",yunit)
                 continue
 
             if x[0] > x[-1]:
@@ -107,11 +100,7 @@ def getValidData(raw_ir_dir, exp_data_info, smi_vocab, formula_vocab, save_path)
                 posWithinX = np.where( (newx >= x[0]) & (newx <= x[-1]) )
                 newy[posWithinX]= func(newx[posWithinX])
             except ValueError:
-                print("error: ",row["SMILES"])
-                print(x.shape)
-                print(x)
-                print(y.shape)
-                print(y)
+                
                 continue
                 
             formula.append(f)
@@ -119,27 +108,21 @@ def getValidData(raw_ir_dir, exp_data_info, smi_vocab, formula_vocab, save_path)
             casID.append(id)
             spectra.append(newy)
     valid_ir_data = pd.DataFrame({'formula': formula, 'smiles': smiles, 'casID': casID, 'spectra': spectra})
-    print(valid_ir_data)
-    # valid_ir_data = valid_ir_data.drop_duplicates()
     valid_ir_data[['formula', 'smiles', 'casID']].to_csv(os.path.join(save_path, "validExpData.csv"))
     valid_ir_data.to_pickle(os.path.join(save_path, "validExpData.pkl")) # .pkl file contains spectra data
     return valid_ir_data
 
 def getBothData(sim_data, exp_valid_data, save_path):
-    # pass
-    print(exp_valid_data)
 
     exp_valid_smi = exp_valid_data['smiles']
     sim_smi = sim_data['smiles']
     
-    # both_smi = []
     both_data_info = {'formula': [], 'smiles': [], 'casID': [], 'spectra': [], 'sim_spectra': []}
     for smi in tqdm(exp_valid_smi):
         try:
             mol = Chem.MolFromSmiles(smi)
             can_smi = Chem.MolToSmiles(mol)
         except TypeError as e:
-            # print("fail to convert: ", smi)
             continue
         if not sim_smi[sim_smi==can_smi].empty:
             data = exp_valid_data[exp_valid_data['smiles'] == smi]
@@ -151,13 +134,8 @@ def getBothData(sim_data, exp_valid_data, save_path):
                 both_data_info['spectra'].append(data['spectra'].item())
                 both_data_info['sim_spectra'].append(sim_data[sim_data['smiles']==smi]['spectra'].item())
             except ValueError as e:
-                print(e)
-                print(data)
                 continue
-        # if len(both_data_info['casID']) != 0:
-        #     break
+
     both_data_info = pd.DataFrame(both_data_info)
-    print(both_data_info)
-    # both_data_info.drop_duplicates()    
     both_data_info[['formula', 'smiles', 'casID']].to_csv(os.path.join(save_path, "bothExpData.csv"))
     both_data_info.to_pickle(os.path.join(save_path, "bothExpData.pkl")) # .pkl file contains sim and exp spectra data

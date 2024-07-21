@@ -1,4 +1,0 @@
-C c 1 c c ( N N ) c ( C ) c n 1 
-O = C ( C Cl ) c 1 c ( F ) c n c c 1 F 
-C C ( O ) C c 1 c c n c c 1 C ( C ) C 
-C C N ( C C ) c 1 c c ( N ) c ( C ) c n 1 

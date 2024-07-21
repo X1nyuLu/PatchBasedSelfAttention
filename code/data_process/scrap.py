@@ -1,12 +1,41 @@
 import os
-import requests, urllib
+import requests
 import argparse
 import logging
 import pandas as pd 
 
-from model.utils import set_logger
 
 nist_url = "https://webbook.nist.gov/cgi/cbook.cgi"
+
+def set_logger(model_dir, log_name):
+    '''Set logger to write info to terminal and save in a file.
+
+    Args:
+        model_dir: (string) path to store the log file
+
+    Returns:
+        None
+    '''
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
+
+    #Don't create redundant handlers everytime set_logger is called
+    if not logger.handlers:
+
+        #File handler with debug level stored in model_dir/generation.log
+        fh = logging.FileHandler(os.path.join(model_dir, log_name))
+        fh.setLevel(logging.DEBUG)
+        fh.setFormatter(logging.Formatter('%(asctime)s: %(levelname)s: %(message)s'))
+        logger.addHandler(fh)
+
+        #Stream handler with info level written to terminal
+        sh = logging.StreamHandler()
+        sh.setLevel(logging.INFO)
+        sh.setFormatter(logging.Formatter('%(message)s'))
+        logger.addHandler(sh)
+    
+    return logger
+
 
 def scrap_data(cas_ls, params, data_dir):
 	'''Collect data from NIST database and store them in jdx format.

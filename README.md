@@ -15,18 +15,33 @@ The original simulated infrared spectra datasets can be found at [Alberts datase
 
 ## Experiments
 
+### Environment
+
+**Requirements**
 ```
-cd /path/to/code   # replace with your root path of code
+python == 3.9.18
+torch==2.0.1+cu118
+torchtext==0.15.2
+rdkit==2022.9.1
+tqdm==4.64.0
 ```
+**Install via Conda**
+```
+# clone the environment
+conda env create -f environment.yaml
+# activate the environment
+conda activate gtmgc
+```
+
 
 ### Training
 ```
-python train_main.py --para train_para.yaml
+python ./code/train_main.py --para train_para.yaml
 ```
 
 ### Inference
 ```
-python inference_main.py --para inference_para.yaml
+python ./code/inference_main.py --para inference_para.yaml
 ```
 ### Checkpoints
 Model checkpoints for three datasets can be found at 

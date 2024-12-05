@@ -12,11 +12,9 @@ import argparse
 import yaml
 import os
 
-# from Ensemble_decode_process import Translate_Transformer
 from inference import Ensemble_Translate_Transformer
 from model import EmbedPatchAttention, make_model_onlySpec, make_model_withFormula
 from utils import score_main, PositionalEncoding
-# import utils.the_annotated_transformer as atf
 
 
 class EnsembleDecoderOutput(object):

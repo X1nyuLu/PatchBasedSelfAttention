@@ -27,7 +27,7 @@ testset_aug:  # Data Augmentation of test set
 aug_num: 2
 smi_aug_num: 1
 max_shift: 
-theta: 0.1
+theta: 0.01
 alpha: 5
 
 # Train Parameters

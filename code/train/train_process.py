@@ -256,7 +256,7 @@ class TrainVal:
                                                                                             val_set.shape[0],
                                                                                             test_set.shape[0]))
                 
-                if testset_aug != None:
+                if testset_aug is not None:
                     test_set_ = generateDataset(test_set, smiles_vocab=self.tgt_vocab, spec_len=spec_len, formula=formula, formula_vocab=self.formula_vocab, 
                                                 aug_mode=None)#, dataset_mode=dataset_mode)
                                                 # smiles_max_pad=self.tgt_max_padding, formula_max_pad=self.formula_max_padding)

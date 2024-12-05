@@ -4,12 +4,9 @@
 formula: True
 formula_max_padding: 15
 models: 
-- /rds/projects/c/chenlv-ai-and-chemistry/wuwj/spec_2_smi/check_final_code/check_result/train/model/best_model_optimizer_params.tar
-- /rds/projects/c/chenlv-ai-and-chemistry/wuwj/spec_2_smi/check_final_code/check_result/train/model/EPOCH_00.pt
-- /rds/projects/c/chenlv-ai-and-chemistry/wuwj/spec_2_smi/check_final_code/check_result/train/model/EPOCH_final.pt
-# - /path/to/model_1
-# - /path/to/model_2
-# - /path/to/model_3
+- /path/to/model_checkpoint_1
+- /path/to/model_checkpoint_2
+- /path/to/model_checkpoint_3
 
 
 spec_embed: 'EmbedPatchAttention'

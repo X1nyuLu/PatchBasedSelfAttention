@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transformer-Based Models for Predicting Molecular Structures</title>
+    <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro" rel="stylesheet">
+    <!-- FontAwesome (GitHub 图标) -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<!-- FontAwesome (支持 GitHub、Adobe 图标) -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+
+<!-- Academicons (arXiv 图标) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons/css/academicons.min.css">
+
+    <style>
+        body {
+            font-family: 'Google Sans', Arial, sans-serif;
+            text-align: center;
+            background-color: white;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: auto;
+        }
+        h1 {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .authors {
+            font-size: 18px;
+            color: #007bff;
+        }
+        .affiliations {
+            font-size: 16px;
+            color: #555;
+        }
+        .journal {
+            font-size: 20px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .button-group {
+            display: flex;
+            justify-content: center;  /* 让按钮居中 */
+            gap: 10px;  /* 按钮之间的间距 */
+            margin-top: 20px;
+        }
+
+        .button {
+            display: inline-flex;
+            align-items: center;
+            background: black;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 16px;
+            transition: background 0.3s;
+        }
+
+        .button i {
+            margin-right: 8px;  /* 图标和文字的间距 */
+            font-size: 18px;
+        }
+
+        .button:hover {
+            background: #333;
+        }
+        #toc-image {
+            margin: 30px auto;
+            max-width: 100%;
+            width: 550px; /* 可调整 */
+        }
+        #abstract {
+            max-width: 700px;
+            margin: 30px auto;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: justify;
+        }
+        #abstract h2 {
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        #abstract p {
+            font-size: 16px;
+            line-height: 1.6;
+            color: #474747;
+        }
+        #abstract strong {
+            font-weight: bold;
+            color: #000;
+        }
+        #Model {
+            max-width: 700px;
+            margin: 30px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            /* box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); */
+            text-align: justify;
+        }
+        #model h2 {
+            text-align: left;
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        #model-image {
+            display: block;
+            margin: 30px auto;
+            max-width: 100%;
+            width: 550px; /* 可调整 */
+        }
+        #Experiment {
+            max-width: 700px;
+            margin: 30px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            /* box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); */
+            text-align: justify;
+        }
+        #Experiment h2 {
+            text-align: left;
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        #image-top1 {
+            display: block;
+            margin: 30px auto;
+            max-width: 70%;
+            width: 550px; /* 可调整 */
+        }
+        #image-tsne {
+            display: block;
+            margin: 30px auto;
+            max-width: 100%;
+            width: 550px; /* 可调整 */
+        }
+        #bibtex-container {
+        max-width: 700px;
+        margin: 50px auto;
+        text-align: left;
+        background: #f9f9f9;
+        padding: 20px;
+        border-radius: 10px;
+        font-family: monospace;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        #bibtex-scroll {
+            max-width: 100%;
+            overflow-x: auto;
+            background: #f9f9f9;
+            padding: 10px;
+            border-radius: 2px;
+            /* box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.1); */
+        }
+
+        pre {
+            white-space: pre;
+            margin: 0;
+            padding: 0;  /* 移除默认内边距，确保文本左对齐 */
+        }
+
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Transformer-Based Models for Predicting Molecular Structures from Infrared Spectra Using Patch-Based Self-Attention</h1>
+        
+        <p class="authors">
+            <a >Wenjin Wu</a><sup>1,2</sup>, 
+            <a href="https://www.birmingham.ac.uk/staff/profiles/computer-science/academic-staff/leonardis-ales">Aleš Leonardis</a><sup>2</sup>,
+            <a href="https://jianbojiao.com/">Jianbo Jiao</a><sup>2</sup>, 
+            <a href="https://faculty.ustc.edu.cn/jiangjun1/zh_CN/index.htm">Jun Jiang</a><sup>1</sup>
+            <a href="http://pichem.ustc.edu.cn/2024/0308/c34649a631871/page.htm">Linjiang Chen</a><sup>1,2</sup>
+        </p>
+
+        <p class="affiliations">
+            <sup>1</sup>University of Science and
+            Technology of China, 
+            <sup>2</sup> University of Birmingham, 
+        </p>
+
+        <p class="journal">The Journal of Physical Chemistry A</A></p>
+        <div class="button-group">
+            <!-- GitHub Code 按钮 -->
+            <a class="button" href="https://github.com/wenjin886/PatchBasedSelfAttention" target="_blank">
+                <i class="fab fa-github"></i> Code
+            </a>
+        
+            <!-- 论文 Paper 按钮 -->
+            <a class="button" href="https://pubs.acs.org/doi/10.1021/acs.jpca.4c05665" target="_blank">
+                <i class="fab fa-google"></i> Paper
+            </a>
+        </div>
+    </div>
+    <!-- <img id="toc" src="./model_TOC3.jpg"> -->
+    <div id = "toc" class="container">
+        <img id="toc-image" src="fig/model_TOC3.jpg" alt="Table of Contents">
+    </div>
+    <section id="abstract">
+        <h2>Abstract</h2>
+        <p>
+            Infrared (IR) spectroscopy, a type of vibrational spectroscopy, provides extensive molecular structure details and is a highly effective technique for chemists to determine molecular structures. However, analysing experimental spectra has always been challenging due to the specialised knowledge required and the variability of spectra under different experimental conditions.
+        </p>
+        <p>
+            Here, we propose a Transformer-based model with a patch-based self-attention spectrum embedding layer, designed to prevent the loss of spectral information while maintaining simplicity and effectiveness. To further enhance the model’s understanding of IR spectra, we introduce a data augmentation approach, which selectively introduces vertical noise only at absorption peaks.
+        </p>
+        <p>
+            Our approach not only achieves state-of-the-art performance on simulated datasets but also attains a top-1 accuracy of 55% on real experimental spectra, surpassing the previous state-of-the-art by approximately 10%. Additionally, our model demonstrates proficiency in analysing intricate and variable fingerprint regions, effectively extracting critical structural information.
+        </p>
+    </section>
+
+    <section id="Model">
+        <h2>Method</h2>
+        <img id="model-image" src="fig/model2.jpg" alt="Model">
+        </p> We introduce a patch-based self-attention spectrum embedding layer to increase the sampling resolution of spectral data while ensuring that no critical information is lost during the sampling process. 
+        Specifically, we sample 3,200 points from each infrared (IR) spectrum within the range of 400–3,982 cm<sup>-1</sup>. 
+        Each spectrum is then divided into patches, each of which is processed through a self-attention mechanism, which improves computational efficiency and allows the model to capture spectral dependencies.
+        
+
+        </p> Additionally, we introduce a data augmentation method for spectral data, called Adaptive Noise. 
+        This technique selectively applies vertical noise to regions containing absorption peaks, 
+        ensuring that the introduced noise does not alter the intrinsic spectral information and encourages the model to focus on peak positions more.
+        
+    </section>
+
+    <section id="Experiment">
+        <h2>Experiments</h2>
+        <img id="image-top1" src="fig/top1_acc.png" alt="Experiment">
+    </p> We evaluate our model on two simulated datasets, QM9S and the IBM dataset, as well as one real experimental dataset, the NIST dataset. Our method achieves superior performance compared to the current state-of-the-art (SOTA) approaches across all three datasets. These results demonstrate the effectiveness and generalizability of our method in accurately predicting molecular structures from IR spectra. 
+    Moreover, the consistent performance improvements across both simulated and real-world datasets highlight the robustness of our approach.
+        <img id="image-tsne" src="fig/exp_vs_sim.png" alt="Experiment">
+    </p>Although there are significant differences between computed spectra and experimental spectra that cannot be ignored, our method achieves comparable performance across both datasets. 
+    The t-SNE visualization further illustrates that the Transformer encoder effectively reduces the discrepancy between computed and experimental IR spectra in the latent space during fine-tuning.
+    <div id="bibtex-container">
+        <h2>BibTeX</h2>
+        <div id="bibtex-scroll">
+            <pre>
+@article{wu2025transformer,
+ title={Transformer-Based Models for Predicting Molecular Structures from Infrared Spectra Using Patch-Based Self-Attention},
+ author={Wu, Wenjin and Leonardis, Aleš and Jiao, Jianbo and Jiang, Jun and Chen, Linjiang},
+ journal={The Journal of Physical Chemistry A},
+ volume = {129},
+ number = {8},
+ pages = {2077-2085},
+ year={2025},
+ doi = {10.1021/acs.jpca.4c05665},
+ publisher={ACS Publications}
+}</pre>
+        </div>
+    </div>
+</body>
+</html>

@@ -100,7 +100,7 @@
             color: #000;
         }
         #Model {
-            max-width: 700px;
+            max-width: 1000px;
             margin: 30px auto;
             padding: 20px;
             background: white;
@@ -121,7 +121,7 @@
             width: 550px; /* 可调整 */
         }
         #Experiment {
-            max-width: 700px;
+            max-width: 1000px;
             margin: 30px auto;
             padding: 20px;
             background: white;
@@ -146,6 +146,12 @@
             margin: 30px auto;
             max-width: 100%;
             width: 550px; /* 可调整 */
+        }
+        #image-exp {
+            display: block;
+            margin: 30px auto;
+            max-width: 100%;
+            width: 1000px; /* 可调整 */
         }
         #bibtex-container {
         max-width: 700px;
@@ -249,10 +255,14 @@
         <img id="image-tsne" src="fig/exp_vs_sim.png" alt="Experiment">
     </p>Although there are significant differences between computed spectra and experimental spectra that cannot be ignored, our method achieves comparable performance across both datasets. 
     The t-SNE visualization further illustrates that the Transformer encoder effectively reduces the discrepancy between computed and experimental IR spectra in the latent space during fine-tuning.
+    </p>Below are example outputs from our method, generating molecules based on the input IR spectra. It is worth noting that the same molecule may correspond to different SMILES strings due to the non-unique nature of SMILES representations.
+        <img id="image-exp" src="fig/examples.png"> 
+    </section>
+    
     <div id="bibtex-container">
-        <h2>BibTeX</h2>
-        <div id="bibtex-scroll">
-            <pre>
+    <h2>BibTeX</h2>
+    <div id="bibtex-scroll">
+    <pre>
 @article{wu2025transformer,
  title={Transformer-Based Models for Predicting Molecular Structures from Infrared Spectra Using Patch-Based Self-Attention},
  author={Wu, Wenjin and Leonardis, Aleš and Jiao, Jianbo and Jiang, Jun and Chen, Linjiang},

@@ -205,7 +205,7 @@ class Translate_Transformer:
         filename = "BeamSearch_BW{}_NB{}_result.txt".format(beam_width, n_best)
 
         logger.info("beam_width: {} | n_best: {}".format(beam_width, n_best))
-        for i, batch in tqdm(enumerate(self.dataloader), desc="Batch"):
+        for i, batch in tqdm(enumerate(self.dataloader), total=len(self.dataloader), desc="Batch"):
             spec = batch["spec"].to(self.device)
             if self.formula:
                 formula = batch["formula"].to(self.device)

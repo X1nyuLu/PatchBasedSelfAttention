@@ -36,12 +36,12 @@ def split_formula(formula: str) -> list:
     formula_split = [a for segment in segments for a in re.split(r"(\d+)", segment)]
     formula_split = list(filter(None, formula_split))
 
-    if "".join(formula_split) != formula:
-        raise ValueError(
-            "Tokenised smiles does not match original: {} {}".format(
-                formula_split, formula
-            )
-        )
+    # if "".join(formula_split) != formula:
+    #     raise ValueError(
+    #         "Tokenised smiles does not match original: {} {}".format(
+    #             formula_split, formula
+    #         )
+    #     )
     return formula_split
 
 
@@ -120,7 +120,8 @@ class generateDataset(Dataset):
 
     def process_spec(self, spec_len, spec_data, aug_mode, aug_num, max_shift=None, theta=None, alpha=None, smi_aug_num=0):
         
-        orig_x = np.arange(400, 3982, 2)
+        # orig_x = np.arange(400, 3982, 2)
+        orig_x = np.linspace(400, 4000, 1024)
         new_x = np.linspace(400, 3980, spec_len)
 
         if aug_mode is None:

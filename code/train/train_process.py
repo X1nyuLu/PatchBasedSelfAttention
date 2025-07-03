@@ -249,9 +249,13 @@ class TrainVal:
                 # val_set = data_df[int(data_num*0.7):int(data_num*0.8)]
                 # test_set = data_df[int(data_num*0.8):]
 
-                train_set = data_df[:int(data_num*0.85)]
-                val_set = data_df[int(data_num*0.85):int(data_num*0.9)]
-                test_set = data_df[int(data_num*0.9):]
+                # train_set = data_df[:int(data_num*0.85)]
+                # val_set = data_df[int(data_num*0.85):int(data_num*0.9)]
+                # test_set = data_df[int(data_num*0.9):]
+                train_set = data_df[data_df['mode'] == 'train']
+                val_set = data_df[data_df['mode'] == 'eval']
+                test_set = data_df[data_df['mode'] == 'test']
+
                 logger.info("Original | train_set: {} data | val_set: {} data | test_set: {} data".format(train_set.shape[0],
                                                                                             val_set.shape[0],
                                                                                             test_set.shape[0]))

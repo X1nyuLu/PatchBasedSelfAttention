@@ -8,7 +8,7 @@ patch_len: 64
 spec_mask_len: 50
 formula: True
 formula_max_padding: 15
-smiles_max_padding: 60
+smiles_max_padding: 100
 d_model: 512
 num_heads: 8
 layer_num: 4
@@ -16,7 +16,7 @@ d_ff: 2048
 dropout: 0.1
 
 # Data 
-data: /fs-computility/ai4chem/luxinyu.p/PatchBasedSelfAttention/vb_raman.pkl
+data: /fs-computility/ai4chem/luxinyu.p/PatchBasedSelfAttention/qm9s_raman.pkl
 vocab_formula: /fs-computility/ai4chem/luxinyu.p/PatchBasedSelfAttention/example/vocab/vocab_formula.pt
 vocab_smiles: /fs-computility/ai4chem/luxinyu.p/PatchBasedSelfAttention/example/vocab/vocab_smiles.pt
 split_testdata: True
@@ -31,7 +31,7 @@ theta: 0.01
 alpha: 5
 
 # Train Parameters
-save_path: /fs-computility/ai4chem/luxinyu.p/PatchBasedSelfAttention/runs/vb_raman/
+save_path: /fs-computility/ai4chem/luxinyu.p/PatchBasedSelfAttention/runs/qm9s_raman/
 batch_size: 128
 num_epochs: 100
 base_lr: 1.0

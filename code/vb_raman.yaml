@@ -8,7 +8,7 @@ patch_len: 64
 spec_mask_len: 50
 formula: True
 formula_max_padding: 15
-smiles_max_padding: 60
+smiles_max_padding: 100
 d_model: 512
 num_heads: 8
 layer_num: 4

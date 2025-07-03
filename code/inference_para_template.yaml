@@ -1,12 +1,12 @@
 # Model Parameters
-model: 
+model: /fs-computility/ai4chem/luxinyu.p/PatchBasedSelfAttention/runs/qm9s_raman/model/best_model_optimizer_params.tar
 spec_embed: 'EmbedPatchAttention'
 spec_len: 3200
 patch_len: 64
 spec_mask_len: 50
 formula: True
 formula_max_padding: 15
-smiles_max_padding: 40
+smiles_max_padding: 100
 d_model: 512
 num_heads: 8
 layer_num: 4
@@ -14,12 +14,12 @@ d_ff: 2048
 dropout: 0.1
 
 # Data 
-test_data: 
-vocab_formula: 
-vocab_smiles: 
+test_data: /fs-computility/ai4chem/luxinyu.p/PatchBasedSelfAttention/runs/qm9s_raman/data/test_set.pt
+vocab_formula: /fs-computility/ai4chem/luxinyu.p/PatchBasedSelfAttention/example/vocab/vocab_formula.pt
+vocab_smiles: /fs-computility/ai4chem/luxinyu.p/PatchBasedSelfAttention/example/vocab/vocab_smiles.pt
 
 # Translate Parameters
-save_path: 
+save_path: /fs-computility/ai4chem/luxinyu.p/PatchBasedSelfAttention/runs/qm9s_raman
 batch_size: 512
 seed: 3234
 beam_width: 10
